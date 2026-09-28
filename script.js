@@ -1694,7 +1694,10 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     /* ---------------- Direct PDF Download Engine (Desktop & Mobile) ---------------- */
 
-    const fallbackPrint = (invoiceNo, paperHeight, wrapper, originalPaper, origWrapperCss, origPaperCss) => {
+    const fallbackPrint = (invoiceNo, customPaperHeight, customWrapper, customPaper, origWrapperCss, origPaperCss) => {
+        const originalPaper = customPaper || document.getElementById('invoice-preview');
+        const wrapper = customWrapper || document.querySelector('.preview-wrapper');
+        const paperHeight = customPaperHeight || (originalPaper ? originalPaper.scrollHeight : 1122);
         const height = paperHeight + 10;
         const width = 1080;
 
@@ -1791,6 +1794,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         window.print();
     };
 
+    const jhaLogoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="70" height="70">
+        <path fill="#ea4e25" d="M38.5,294.7l-12.8,3.2C8.8,268,0,234.3,0,200,0,115.3,52.9,42.8,127.4,13.6v29.5c-59.2,27.5-100.3,87.5-100.3,156.9,0,32.2,8.9,63.7,25.9,91l-14.6,3.7ZM200,0c-7.5,0-15,.4-22.4,1.2v27.3c7.4-1,14.9-1.5,22.4-1.5,95.3,0,172.9,77.6,172.9,172.9,0,6.3-.3,12.6-1,18.8l-236.4,59.6v35.2l228.1-57.5s0,0,0,0c-23.4,67.8-87.8,116.6-163.5,116.6-40.1,0-78.9-13.9-109.8-39.4l-31.5,7.9c36.2,36.2,86.2,58.6,141.3,58.6,93.5,0,172.3-64.6,194-151.5,3-12,4.9-24.3,5.6-36.6.2-3.9.4-7.9.4-11.9C400,89.7,310.3,0,200,0ZM169.6,197c0-2.2,1-4.3,2.6-5.9,1.6-1.6,3.7-2.4,6-2.4s4.4.9,6,2.4c1.6,1.6,2.5,3.7,2.6,5.9v50.9l34.2-8.6v-42.3c0-10.8-4.2-19.9-12.6-27.3-8.4-7.4-18.4-11.1-30.1-11.1-2.9,0-5.7-.1-8.5-.4V2.3c-11.6,1.8-23,4.6-34.1,8.4v250.1l34.2-8.6v-55.2ZM295.8,217.5v-7.2c-5.5,4.1-11.8,7.1-18.4,8.9-24.1,6.4-43.6-7.5-43.6-31.1s19.5-47.9,43.6-54.4c6-1.7,12.3-2,18.4-.9v-3.8l34.1-9.1v88.4l-34.2,9.2ZM286.1,174.4c0-1.7-.5-3.4-1.4-4.9-.9-1.5-2.3-2.6-3.9-3.3-1.6-.7-3.4-.9-5.1-.6-1.7.3-3.3,1.1-4.5,2.4-1.2,1.2-2.1,2.8-2.4,4.5-.4,1.7-.2,3.5.5,5.1.7,1.6,1.8,3,3.2,4,1.4,1,3.1,1.5,4.9,1.5,1.1,0,2.3-.2,3.3-.6,1.1-.4,2-1.1,2.8-1.9.8-.8,1.5-1.7,1.9-2.8.4-1,.7-2.2.7-3.3ZM118.3,141.4v-16.6l-34.1,9v16.6l34.1-9ZM84.2,326.7l34.1-8.6v-160l-34.1,8.5v124.8l-26.5,6.7-27.8,7c6.5,10.5,14,20.4,22.4,29.6l5-1.3,25.5-6.4,1.4-.3Z"/>
+    </svg>`;
+
     const triggerDownloadPdf = async () => {
         // Ensure invoice editor tab is active before downloading
         if (activeTabKey !== 'tab-invoice') {
@@ -1806,67 +1813,344 @@ document.addEventListener('DOMContentLoaded', async () => {
         const saved = await saveCurrentInvoice(false);
         if (!saved) return;
 
-        const originalPaper = document.getElementById('invoice-preview');
-        const wrapper = document.querySelector('.preview-wrapper');
-        if (!originalPaper) return;
+        const invoiceNo = inputs.invoiceNumber.value.trim() || '0001';
+        showToast('Generating genuine vector PDF...', 'info');
 
-        const invoiceNo = inputs.invoiceNumber.value || '0001';
-
-        // 2. Save original inline styles to restore after download
-        const origWrapperCss = wrapper ? wrapper.style.cssText : '';
-        const origPaperCss = originalPaper.style.cssText;
-
-        showToast('Generating borderless PDF...', 'info');
-
-        // Add printing preparation class to body
-        document.body.classList.add('is-printing');
-
-        // Fully unconstrain both wrapper and paper to full 1080px physical layout
-        if (wrapper) {
-            wrapper.style.cssText = 'transform: none !important; width: 1080px !important; min-width: 1080px !important; max-width: 1080px !important; height: auto !important; min-height: 0 !important; max-height: none !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border-radius: 0 !important;';
+        // Check if pdfMake is loaded
+        if (typeof pdfMake === 'undefined' || typeof pdfMake.createPdf !== 'function') {
+            console.warn('pdfMake not ready, falling back to browser print');
+            fallbackPrint(invoiceNo);
+            return;
         }
-        originalPaper.style.cssText = 'width: 1080px !important; min-width: 1080px !important; max-width: 1080px !important; height: auto !important; min-height: 0 !important; max-height: none !important; margin: 0 !important; transform: none !important; box-shadow: none !important;';
 
-        await new Promise(r => setTimeout(r, 120));
+        try {
+            const profile = InvoiceDB.getProfile() || {};
+            const settings = InvoiceDB.getSettings() || {};
+            const fromFullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Your Name';
+            const toName = currentClient.name || 'Client Name';
+            const currencySymbol = getCurrencySymbol();
 
-        const paperHeight = Math.ceil(Math.max(originalPaper.scrollHeight, originalPaper.offsetHeight, 1122));
+            // Logo definition: vector SVG default or uploaded image
+            let logoElement;
+            if (profile.companyLogo && typeof profile.companyLogo === 'string' && profile.companyLogo.startsWith('data:image')) {
+                logoElement = {
+                    image: profile.companyLogo,
+                    width: 72,
+                    height: 72,
+                    fit: [72, 72]
+                };
+            } else {
+                logoElement = {
+                    svg: jhaLogoSvg,
+                    width: 72,
+                    height: 72
+                };
+            }
 
-        // Direct 1-Click PDF Download to Downloads folder across Desktop & Mobile
-        if (typeof html2pdf !== 'undefined') {
-            const opt = {
-                margin: 0,
-                filename: `Invoice-${invoiceNo}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: {
-                    scale: 2, // High resolution Retina clarity
-                    useCORS: true,
-                    logging: false,
-                    x: 0,
-                    y: 0,
-                    scrollX: 0,
-                    scrollY: 0,
-                    width: 1080,
-                    windowWidth: 1080
-                },
-                jsPDF: {
-                    unit: 'px',
-                    format: [1080, paperHeight + 4],
-                    orientation: 'portrait',
-                    hotfixes: ['px_scaling']
+            // Parties: From
+            const fromStack = [
+                { text: 'From', fontSize: 13, bold: true, color: '#0f172a', margin: [0, 0, 0, 6] },
+                { text: fromFullName, bold: true, fontSize: 11, color: '#1e293b' }
+            ];
+            if (profile.address) fromStack.push({ text: profile.address, color: '#64748b' });
+            if (profile.email) fromStack.push({ text: profile.email, color: '#64748b' });
+            if (profile.mobile) fromStack.push({ text: profile.mobile, color: '#64748b' });
+
+            // Parties: To
+            const toStack = [
+                { text: 'To', fontSize: 13, bold: true, color: '#0f172a', margin: [0, 0, 0, 6] },
+                { text: toName, bold: true, fontSize: 11, color: '#1e293b' }
+            ];
+            if (currentClient.location) toStack.push({ text: currentClient.location, color: '#64748b' });
+            if (currentClient.email) toStack.push({ text: currentClient.email, color: '#64748b' });
+            if (currentClient.phone) toStack.push({ text: currentClient.phone, color: '#64748b' });
+
+            // Table rows with line items
+            const tableBody = [
+                [
+                    { text: 'DESCRIPTION', fontSize: 9, bold: true, color: '#475569', margin: [0, 8, 0, 8] },
+                    { text: 'AMOUNT', fontSize: 9, bold: true, color: '#475569', alignment: 'right', margin: [0, 8, 0, 8] }
+                ]
+            ];
+
+            let total = 0;
+            items.forEach(item => {
+                const itemPrice = parseFloat(item.price) || 0;
+                total += itemPrice;
+                const descStack = [
+                    { text: item.description || '', bold: true, fontSize: 10.5, color: '#0f172a' }
+                ];
+                if (item.sub) {
+                    descStack.push({ text: item.sub, fontSize: 9, color: '#64748b', margin: [0, 2, 0, 0] });
                 }
+                tableBody.push([
+                    { stack: descStack, margin: [0, 10, 0, 10] },
+                    { text: `${currencySymbol} ${itemPrice.toFixed(2)}`, alignment: 'right', fontSize: 10.5, color: '#0f172a', margin: [0, 10, 0, 10] }
+                ]);
+            });
+
+            // Advance & Balance Breakdown
+            const showAdvance = inputs.toggleAdvance.checked;
+            const showBalance = inputs.toggleBalance.checked;
+            const advanceVal = showAdvance ? (parseFloat(inputs.advanceAmount.value) || 0) : 0;
+            const balanceVal = total - advanceVal;
+
+            const breakdownRows = [];
+            if (showAdvance) {
+                breakdownRows.push([
+                    { text: 'Pay in Advance', color: '#64748b', fontSize: 10 },
+                    { text: `${currencySymbol} ${advanceVal.toFixed(2)}`, alignment: 'right', bold: true, fontSize: 10 }
+                ]);
+            }
+            if (showBalance) {
+                breakdownRows.push([
+                    { text: 'Pay upon Completion', color: '#64748b', fontSize: 10 },
+                    { text: `${currencySymbol} ${balanceVal.toFixed(2)}`, alignment: 'right', bold: true, fontSize: 10 }
+                ]);
+            }
+
+            // Payment Methods: PayPal & Wise
+            const p1 = profile.platforms?.[0] || { name: 'PayPal', email: '' };
+            const p2 = profile.platforms?.[1] || { name: 'Wise', email: '' };
+            const bank = profile.bank || {};
+
+            const paymentCols = [];
+            if (p1.email || p1.name) {
+                paymentCols.push({
+                    width: '32%',
+                    stack: [
+                        { text: p1.name || 'PayPal', bold: true, fontSize: 10, color: '#64748b', margin: [0, 0, 0, 4] },
+                        {
+                            text: [
+                                { text: 'Email   :   ', color: '#94a3b8', fontSize: 9 },
+                                { text: p1.email || '', fontSize: 9, color: '#1e293b' }
+                            ]
+                        }
+                    ]
+                });
+            }
+            if (p2.email || p2.name) {
+                paymentCols.push({
+                    width: '32%',
+                    stack: [
+                        { text: p2.name || 'Wise', bold: true, fontSize: 10, color: '#64748b', margin: [0, 0, 0, 4] },
+                        {
+                            text: [
+                                { text: 'Email   :   ', color: '#94a3b8', fontSize: 9 },
+                                { text: p2.email || '', fontSize: 9, color: '#1e293b' }
+                            ]
+                        }
+                    ]
+                });
+            }
+
+            // Bank details
+            const bankRows = [];
+            if (bank.bankName) bankRows.push([{ text: 'Bank Name', color: '#64748b', fontSize: 8.5 }, { text: `:  ${bank.bankName}`, fontSize: 8.5, color: '#1e293b' }]);
+            if (bank.branchName) bankRows.push([{ text: 'Branch Name', color: '#64748b', fontSize: 8.5 }, { text: `:  ${bank.branchName}`, fontSize: 8.5, color: '#1e293b' }]);
+            if (bank.branchCode) bankRows.push([{ text: 'Branch Code', color: '#64748b', fontSize: 8.5 }, { text: `:  ${bank.branchCode}`, fontSize: 8.5, color: '#1e293b' }]);
+            if (bank.swiftCode) bankRows.push([{ text: 'SWIFT Code', color: '#64748b', fontSize: 8.5 }, { text: `:  ${bank.swiftCode}`, fontSize: 8.5, color: '#1e293b' }]);
+            if (bank.routingNo) bankRows.push([{ text: 'Routing No', color: '#64748b', fontSize: 8.5 }, { text: `:  ${bank.routingNo}`, fontSize: 8.5, color: '#1e293b' }]);
+            if (bank.accountNumber) bankRows.push([{ text: 'A/C No', color: '#64748b', fontSize: 8.5 }, { text: `:  ${bank.accountNumber}`, fontSize: 8.5, color: '#1e293b' }]);
+
+            if (bankRows.length > 0) {
+                paymentCols.push({
+                    width: paymentCols.length > 0 ? '36%' : '*',
+                    stack: [
+                        {
+                            table: {
+                                widths: [65, '*'],
+                                body: bankRows
+                            },
+                            layout: 'noBorders'
+                        }
+                    ]
+                });
+            }
+
+            const docContent = [
+                // Top Header Row
+                {
+                    columns: [
+                        {
+                            width: 85,
+                            stack: [logoElement]
+                        },
+                        {
+                            width: '*',
+                            stack: [
+                                {
+                                    text: [
+                                        { text: 'Invoice', fontSize: 24, bold: true, color: '#0f172a' },
+                                        { text: '  |  ', fontSize: 18, color: '#cbd5e1' },
+                                        { text: toName, fontSize: 20, bold: true, color: '#334155' }
+                                    ],
+                                    margin: [0, 4, 0, 4]
+                                },
+                                {
+                                    text: [
+                                        { text: 'No. ', fontSize: 10, color: '#64748b' },
+                                        { text: invoiceNo, fontSize: 10, bold: true, color: '#0f172a' },
+                                        { text: '   |   ', fontSize: 10, color: '#cbd5e1' },
+                                        { text: 'Date: ', fontSize: 10, color: '#64748b' },
+                                        { text: formatDate(inputs.invoiceDate.value), fontSize: 10, bold: true, color: '#0f172a' }
+                                    ],
+                                    margin: [0, 0, 0, 18]
+                                },
+                                {
+                                    columns: [
+                                        { width: '*', stack: fromStack },
+                                        { width: '*', stack: toStack }
+                                    ]
+                                }
+                            ]
+                        }
+                    ],
+                    margin: [0, 0, 0, 28]
+                },
+
+                // Line Items Table
+                {
+                    table: {
+                        headerRows: 1,
+                        widths: ['*', 120],
+                        body: tableBody
+                    },
+                    layout: {
+                        hLineWidth: (i, node) => (i === 1 || i === node.table.body.length ? 1 : 0.5),
+                        vLineWidth: () => 0,
+                        hLineColor: () => '#e2e8f0',
+                        paddingLeft: () => 0,
+                        paddingRight: () => 0
+                    },
+                    margin: [0, 0, 0, 14]
+                },
+
+                // Total Pill
+                {
+                    columns: [
+                        { width: '*', text: '' },
+                        {
+                            width: 'auto',
+                            table: {
+                                body: [
+                                    [
+                                        {
+                                            text: [
+                                                { text: 'TOTAL    ', fontSize: 11, bold: true, color: '#ea4e25' },
+                                                { text: `${currencySymbol} ${total.toFixed(2)}`, fontSize: 13, bold: true, color: '#ea4e25' }
+                                            ],
+                                            margin: [16, 8, 16, 8]
+                                        }
+                                    ]
+                                ]
+                            },
+                            layout: {
+                                fillColor: '#fff5f2',
+                                hLineWidth: () => 0,
+                                vLineWidth: () => 0
+                            }
+                        }
+                    ],
+                    margin: [0, 0, 0, 16]
+                }
+            ];
+
+            // Optional advance/balance breakdown table
+            if (breakdownRows.length > 0) {
+                docContent.push({
+                    columns: [
+                        { width: '*', text: '' },
+                        {
+                            width: 220,
+                            table: {
+                                widths: ['*', 90],
+                                body: breakdownRows
+                            },
+                            layout: 'noBorders',
+                            margin: [0, 0, 0, 16]
+                        }
+                    ]
+                });
+            }
+
+            // Note
+            const noteText = settings.defaultNote || inputs.noteText?.value || 'Please complete your payment within 14 days, your cooperation is greatly appreciated.';
+            if (noteText) {
+                docContent.push({
+                    text: [
+                        { text: 'Note  :  ', color: '#94a3b8', fontSize: 9.5 },
+                        { text: noteText, color: '#475569', fontSize: 9.5 }
+                    ],
+                    margin: [0, 0, 0, 28]
+                });
+            }
+
+            // Payment info section (if any payment details present)
+            if (paymentCols.length > 0) {
+                docContent.push(
+                    {
+                        text: 'Payment info',
+                        fontSize: 13,
+                        bold: true,
+                        color: '#0f172a',
+                        margin: [0, 0, 0, 10]
+                    },
+                    {
+                        columns: paymentCols,
+                        margin: [0, 0, 0, 32]
+                    }
+                );
+            }
+
+            // Footer Divider
+            docContent.push(
+                {
+                    canvas: [
+                        { type: 'line', x1: 0, y1: 0, x2: 499, y2: 0, lineWidth: 0.5, lineColor: '#f1f5f9' }
+                    ],
+                    margin: [0, 0, 0, 20]
+                },
+                // Thank You & Signature
+                {
+                    stack: [
+                        { text: 'Thank you!', fontSize: 16, bold: true, color: '#0f172a', margin: [0, 0, 0, 4] },
+                        {
+                            text: [
+                                { text: fromFullName || 'Authorized Signature', fontSize: 9.5, color: '#64748b' },
+                                ...(profile.mobile ? [
+                                    { text: '   |   ', color: '#cbd5e1' },
+                                    { text: 'Mobile: ', color: '#64748b', fontSize: 9.5 },
+                                    { text: profile.mobile, color: '#334155', fontSize: 9.5 }
+                                ] : [])
+                            ]
+                        }
+                    ]
+                }
+            );
+
+            const docDef = {
+                pageSize: 'A4',
+                pageMargins: [48, 48, 48, 48],
+                defaultStyle: {
+                    font: 'Roboto',
+                    fontSize: 10,
+                    color: '#1e293b',
+                    lineHeight: 1.3
+                },
+                content: docContent
             };
 
-            try {
-                // Generate the raw PDF Blob directly to bypass jsPDF's legacy "if (isSafari) window.open()" check
-                const pdfBlob = await html2pdf().set(opt).from(originalPaper).outputPdf('blob');
-                const filename = `Invoice-${invoiceNo}.pdf`;
+            const filename = `Invoice-${invoiceNo}.pdf`;
+            const pdfDoc = pdfMake.createPdf(docDef);
 
+            pdfDoc.getBlob(async (pdfBlob) => {
                 const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
                 const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
                 let savedDirectly = false;
 
-                // On iOS Safari: use Web Share API so the user can immediately "Save to Files" without opening a new tab
+                // On iOS Safari: use Web Share API so the user can immediately "Save to Files"
                 if (isIOS && isSafari && navigator.canShare) {
                     try {
                         const file = new File([pdfBlob], filename, { type: 'application/pdf' });
@@ -1885,10 +2169,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                     }
                 }
 
-                // If not shared (Desktop, Android, Edge, or fallback), trigger direct binary file download
                 if (!savedDirectly) {
-                    // Force application/octet-stream to prevent Safari from opening the PDF in a new viewer tab
-                    const octetBlob = new Blob([pdfBlob], { type: 'application/octet-stream' });
+                    const octetBlob = new Blob([pdfBlob], { type: 'application/pdf' });
                     const blobUrl = URL.createObjectURL(octetBlob);
                     const link = document.createElement('a');
                     link.href = blobUrl;
@@ -1901,22 +2183,13 @@ document.addEventListener('DOMContentLoaded', async () => {
                         URL.revokeObjectURL(blobUrl);
                     }, 1500);
 
-                    showToast(`Invoice #${invoiceNo} downloaded to Downloads!`, 'success');
+                    showToast(`Invoice #${invoiceNo} PDF downloaded!`, 'success');
                 }
-            } catch (err) {
-                console.error('Direct PDF export error, falling back to print:', err);
-                fallbackPrint(invoiceNo, paperHeight, wrapper, originalPaper, origWrapperCss, origPaperCss);
-                return;
-            } finally {
-                document.body.classList.remove('is-printing');
-                if (wrapper) wrapper.style.cssText = origWrapperCss;
-                originalPaper.style.cssText = origPaperCss;
-                if (window.innerWidth <= 768 && typeof applyMobilePreviewZoom === 'function') {
-                    applyMobilePreviewZoom();
-                }
-            }
-        } else {
-            fallbackPrint(invoiceNo, paperHeight, wrapper, originalPaper, origWrapperCss, origPaperCss);
+            });
+
+        } catch (err) {
+            console.error('Vector PDF generation error, falling back to print:', err);
+            fallbackPrint(invoiceNo);
         }
     };
 
