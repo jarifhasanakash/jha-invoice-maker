@@ -597,7 +597,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // "From" information automatically pulled from Settings / Profile
         const profile = InvoiceDB.getProfile();
-        const fromFullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Jarif Hasan';
+        const fromFullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Your Name';
         previews.fromName.textContent = fromFullName;
         previews.fromLocation.textContent = profile.address || '';
         previews.fromEmail.textContent = profile.email || '';
@@ -1338,7 +1338,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const invNo = inputs.invoiceNumber.value.trim() || '0001';
         const profile = InvoiceDB.getProfile();
         const settings = InvoiceDB.getSettings();
-        const fromFullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Jarif Hasan';
+        const fromFullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Your Name';
 
         const invoiceData = {
             id: currentEditingInvoiceId || `inv_${Date.now()}`,
@@ -2096,7 +2096,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function syncProfileToPreviewsAndDefaults() {
         const profile = InvoiceDB.getProfile();
-        const fullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Jarif Hasan';
+        const fullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Your Name';
 
         // From details in preview
         if (previews.fromName) previews.fromName.textContent = fullName;

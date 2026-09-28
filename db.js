@@ -16,35 +16,26 @@ const InvoiceDB = (() => {
         version: '2.0',
         lastUpdated: new Date().toISOString(),
         profile: {
-            firstName: 'Jarif',
-            lastName: 'Hasan',
-            email: 'jarif.hasan@example.com',
-            mobile: '+880 1700-000000',
-            address: 'Dhaka, Bangladesh',
+            firstName: '',
+            lastName: '',
+            email: '',
+            mobile: '',
+            address: '',
             companyLogo: null,
             platforms: [
-                { id: 'platform1', name: 'Payoneer', email: 'jarif.hasan@example.com' },
-                { id: 'platform2', name: 'Wise', email: 'jarif.hasan@example.com' }
+                { id: 'platform1', name: 'Payoneer', email: '' },
+                { id: 'platform2', name: 'Wise', email: '' }
             ],
             bank: {
-                bankName: 'Dhaka Bank',
-                accountNumber: '1234567890',
-                branchName: 'Banani Branch',
-                branchCode: '012',
-                swiftCode: 'DHAKBDDHXXX',
-                routingNo: '085260123'
+                bankName: '',
+                accountNumber: '',
+                branchName: '',
+                branchCode: '',
+                swiftCode: '',
+                routingNo: ''
             }
         },
-        clients: [
-            {
-                id: 'client_1',
-                name: 'Acme Corporation',
-                location: 'San Francisco, CA, USA',
-                email: 'billing@acme.example.com',
-                phone: '+1 415-555-0199',
-                notes: 'Payment terms: 14 days'
-            }
-        ],
+        clients: [],
         invoices: [],
         settings: {
             lastInvoiceNumber: '0001',
@@ -262,7 +253,7 @@ const InvoiceDB = (() => {
                             date: inv.date || new Date().toISOString().split('T')[0],
                             dueDate: inv.dueDate || inv.date || new Date().toISOString().split('T')[0],
                             status: inv.status || 'Pending',
-                            from: inv.from || { name: 'Jarif Hasan', location: 'Dhaka, Bangladesh', email: 'jarif.hasan@example.com' },
+                            from: inv.from || { name: '', location: '', email: '' },
                             client: inv.client || inv.to || { name: 'Client Name', location: '', email: '' },
                             items: items,
                             toggleAdvance: !!inv.toggleAdvance,

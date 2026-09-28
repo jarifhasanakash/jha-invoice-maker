@@ -22,9 +22,9 @@
     <!-- Phosphor Icons (Regular & Bold) -->
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
-    <link rel="stylesheet" href="styles.css?v=6.3">
+    <link rel="stylesheet" href="styles.css?v=6.4">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="db.js"></script>
+    <script src="db.js?v=2.2"></script>
 </head>
 
 <body>
@@ -296,9 +296,9 @@
                                             <div class="party from">
                                                 <h3>From</h3>
                                                 <div class="party-details">
-                                                    <div class="name" id="preview-from-name">Jarif Hasan</div>
-                                                    <div class="sub" id="preview-from-location">Dhaka, Bangladesh</div>
-                                                    <div class="sub" id="preview-from-email">jarif.hasan@example.com</div>
+                                                    <div class="name" id="preview-from-name">Your Business / Name</div>
+                                                    <div class="sub" id="preview-from-location">City/State, Country</div>
+                                                    <div class="sub" id="preview-from-email">your.email@example.com</div>
                                                 </div>
                                             </div>
                                             <div class="party to">
@@ -354,17 +354,17 @@
                                     <h3>Payment info</h3>
                                     <div class="payment-methods">
                                         <div class="col" id="preview-col-platform1">
-                                            <h4 id="preview-platform1-name">Payoneer</h4>
+                                            <h4 id="preview-platform1-name">Platform 1</h4>
                                             <div class="row" id="preview-row-platform1-email"><span
                                                     class="lbl">Email</span><span class="sep">:</span><span class="val"
-                                                    id="preview-platform1-email">jarif.hasan@example.com</span>
+                                                    id="preview-platform1-email">account@example.com</span>
                                             </div>
                                         </div>
                                         <div class="col" id="preview-col-platform2">
-                                            <h4 id="preview-platform2-name">Wise</h4>
+                                            <h4 id="preview-platform2-name">Platform 2</h4>
                                             <div class="row" id="preview-row-platform2-email"><span
                                                     class="lbl">Email</span><span class="sep">:</span><span class="val"
-                                                    id="preview-platform2-email">jarif.hasan@example.com</span></div>
+                                                    id="preview-platform2-email">account@example.com</span></div>
                                         </div>
                                     </div>
                                     <div class="divider"></div>
@@ -375,33 +375,33 @@
                                             </div>
                                             <div class="row" id="preview-row-first-name"><span class="lbl">First
                                                     Name</span><span class="sep">:</span><span class="val"
-                                                    id="preview-first-name">Jarif</span></div>
+                                                    id="preview-first-name">First</span></div>
                                             <div class="row" id="preview-row-last-name"><span class="lbl">Last Name</span><span
-                                                    class="sep">:</span><span class="val" id="preview-last-name">Hasan</span>
+                                                    class="sep">:</span><span class="val" id="preview-last-name">Last</span>
                                             </div>
                                             <div class="row" id="preview-row-address"><span class="lbl">Address</span><span
-                                                    class="sep">:</span><span class="val" id="preview-address">Dhaka,
-                                                    Bangladesh</span></div>
+                                                    class="sep">:</span><span class="val" id="preview-address">City,
+                                                    Country</span></div>
                                             <div class="row" id="preview-row-account-number"><span class="lbl">A/C
                                                     No</span><span class="sep">:</span><span class="val"
-                                                    id="preview-account-number">1234567890</span></div>
+                                                    id="preview-account-number">0000000000</span></div>
                                         </div>
                                         <div class="bank-col-right">
                                             <div class="row" id="preview-row-bank-name"><span class="lbl">Bank Name</span><span
-                                                    class="sep">:</span><span class="val" id="preview-bank-name">Dhaka
-                                                    Bank</span></div>
+                                                    class="sep">:</span><span class="val" id="preview-bank-name">Bank
+                                                    Name</span></div>
                                             <div class="row" id="preview-row-branch-name"><span class="lbl">Branch
                                                     Name</span><span class="sep">:</span><span class="val"
-                                                    id="preview-branch-name">Banani Branch</span></div>
+                                                    id="preview-branch-name">Branch Name</span></div>
                                             <div class="row" id="preview-row-branch-code"><span class="lbl">Branch
                                                     Code</span><span class="sep">:</span><span class="val"
-                                                    id="preview-branch-code">012</span></div>
+                                                    id="preview-branch-code">000</span></div>
                                             <div class="row" id="preview-row-swift-code"><span class="lbl">SWIFT
                                                     Code</span><span class="sep">:</span><span class="val"
-                                                    id="preview-swift-code">DHAKBDDHXXX</span></div>
+                                                    id="preview-swift-code">SWIFTCODE</span></div>
                                             <div class="row" id="preview-row-routing-no"><span class="lbl">Routing
                                                     No</span><span class="sep">:</span><span class="val"
-                                                    id="preview-routing-no">085260123</span></div>
+                                                    id="preview-routing-no">00000000</span></div>
                                         </div>
                                     </div>
                                 </div>
@@ -411,10 +411,10 @@
                             <div class="invoice-thank-you">
                                 <h2>Thank you!</h2>
                                 <div class="signature">
-                                    <span class="name" id="preview-signature-name">Jarif Hasan</span>
+                                    <span class="name" id="preview-signature-name">Authorized Signature</span>
                                     <span id="preview-mobile-divider" class="signature-divider">|</span>
-                                    <span id="preview-mobile-container" class="contact">WhatsApp: <span id="preview-mobile">+880
-                                            1700-000000</span></span>
+                                    <span id="preview-mobile-container" class="contact">Phone: <span id="preview-mobile">+00
+                                            0000-000000</span></span>
                                 </div>
                             </div>
                         </div>
@@ -881,8 +881,8 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="sync-code.js?v=1.2"></script>
-    <script src="script.js?v=4.3"></script>
+    <script src="sync-code.js?v=1.3"></script>
+    <script src="script.js?v=4.4"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
