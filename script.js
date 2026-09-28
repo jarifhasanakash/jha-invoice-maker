@@ -2067,7 +2067,12 @@ document.addEventListener('DOMContentLoaded', async () => {
             profile.lastName = 'Doe';
             profile.email = profile.email || 'john.doe@example.com';
             profile.mobile = profile.mobile || '+1 (555) 234-5678';
-            profile.address = profile.address || '742 Evergreen Terrace, Springfield, OR';
+            profile.address = profile.address || 'Dhaka, Bangladesh';
+            needsSave = true;
+        }
+
+        if (profile.address === '742 Evergreen Terrace, Springfield, OR') {
+            profile.address = 'Dhaka, Bangladesh';
             needsSave = true;
         }
 
@@ -2087,14 +2092,23 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (!profile.bank || (!profile.bank.bankName && !profile.bank.accountNumber)) {
             profile.bank = {
-                bankName: 'Chase Bank',
+                bankName: 'Matir Bank',
                 accountNumber: '9876543210',
-                branchName: 'Downtown Branch',
+                branchName: 'Uttara Branch',
                 branchCode: '102',
                 swiftCode: 'CHASUS33XXX',
                 routingNo: '021000021'
             };
             needsSave = true;
+        } else {
+            if (profile.bank.bankName === 'Chase Bank') {
+                profile.bank.bankName = 'Matir Bank';
+                needsSave = true;
+            }
+            if (profile.bank.branchName === 'Downtown Branch') {
+                profile.bank.branchName = 'Uttara Branch';
+                needsSave = true;
+            }
         }
 
         if (needsSave) {

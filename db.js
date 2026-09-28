@@ -20,16 +20,16 @@ const InvoiceDB = (() => {
             lastName: 'Doe',
             email: 'john.doe@example.com',
             mobile: '+1 (555) 234-5678',
-            address: '742 Evergreen Terrace, Springfield, OR',
+            address: 'Dhaka, Bangladesh',
             companyLogo: null,
             platforms: [
                 { id: 'platform1', name: 'PayPal', email: 'john.doe@example.com' },
                 { id: 'platform2', name: 'Wise', email: 'john.doe@example.com' }
             ],
             bank: {
-                bankName: 'Chase Bank',
+                bankName: 'Matir Bank',
                 accountNumber: '9876543210',
-                branchName: 'Downtown Branch',
+                branchName: 'Uttara Branch',
                 branchCode: '102',
                 swiftCode: 'CHASUS33XXX',
                 routingNo: '021000021'
