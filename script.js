@@ -1527,12 +1527,14 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function handleTabActivated(tabKey) {
+        // Discard any unsaved settings edits when navigating between tabs
+        loadProfileAndSettings();
+
         if (tabKey === 'tab-history') {
             updateEarningsDisplay();
         } else if (tabKey === 'tab-clients') {
             renderClientsModalList(clientSearchInput ? clientSearchInput.value : '');
         } else if (tabKey === 'tab-settings') {
-            loadProfileAndSettings();
             if (window.SyncCode && typeof window.SyncCode.generateAndPublishCode === 'function') {
                 window.SyncCode.generateAndPublishCode();
             }
@@ -2057,64 +2059,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (dbBadge) dbBadge.addEventListener('click', openSettingsTab);
 
     function loadProfileAndSettings() {
-        const dbData = InvoiceDB.getData() || {};
-        let profile = InvoiceDB.getProfile() || {};
-        let settings = InvoiceDB.getSettings() || {};
-        let needsSave = false;
-
-        // If first-time user / blank profile AND database is in demo mode, auto-populate with realistic dummy data
-        if (dbData.isDemoData && !profile.firstName && !profile.lastName) {
-            profile.firstName = 'John';
-            profile.lastName = 'Doe';
-            profile.email = profile.email || 'john.doe@example.com';
-            profile.mobile = profile.mobile || '+1 (555) 234-5678';
-            profile.address = profile.address || 'Dhaka, Bangladesh';
-            needsSave = true;
-        }
-
-        if (profile.address === '742 Evergreen Terrace, Springfield, OR') {
-            profile.address = 'Dhaka, Bangladesh';
-            needsSave = true;
-        }
-
-        if (dbData.isDemoData && (!Array.isArray(profile.platforms) || profile.platforms.length === 0)) {
-            profile.platforms = [
-                { id: 'platform1', name: 'PayPal', email: profile.email || 'john.doe@example.com' },
-                { id: 'platform2', name: 'Wise', email: profile.email || 'john.doe@example.com' }
-            ];
-            needsSave = true;
-        } else if (Array.isArray(profile.platforms) && profile.platforms.length > 0) {
-            // Replace Payoneer with PayPal
-            if (profile.platforms[0] && (profile.platforms[0].name === 'Payoneer' || !profile.platforms[0].name)) {
-                profile.platforms[0].name = 'PayPal';
-                needsSave = true;
-            }
-        }
-
-        if (dbData.isDemoData && (!profile.bank || (!profile.bank.bankName && !profile.bank.accountNumber))) {
-            profile.bank = {
-                bankName: 'Matir Bank',
-                accountNumber: '9876543210',
-                branchName: 'Uttara Branch',
-                branchCode: '102',
-                swiftCode: 'CHASUS33XXX',
-                routingNo: '021000021'
-            };
-            needsSave = true;
-        } else if (profile.bank) {
-            if (profile.bank.bankName === 'Chase Bank') {
-                profile.bank.bankName = 'Matir Bank';
-                needsSave = true;
-            }
-            if (profile.bank.branchName === 'Downtown Branch') {
-                profile.bank.branchName = 'Uttara Branch';
-                needsSave = true;
-            }
-        }
-
-        if (needsSave) {
-            InvoiceDB.saveProfile(profile);
-        }
+        const profile = InvoiceDB.getProfile() || {};
+        const settings = InvoiceDB.getSettings() || {};
 
         settingInputs.firstName.value = profile.firstName || '';
         settingInputs.lastName.value = profile.lastName || '';
@@ -2287,30 +2233,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (saveSettingsBtn) {
         saveSettingsBtn.addEventListener('click', () => {
             saveAllSettingsFromUI(true);
-        });
-    }
-
-    const clearSettingsBtn = document.getElementById('clear-settings-btn');
-    if (clearSettingsBtn) {
-        clearSettingsBtn.addEventListener('click', async () => {
-            if (!confirm('Are you sure you want to clear all profile and bank details fields?')) return;
-            settingInputs.firstName.value = '';
-            settingInputs.lastName.value = '';
-            settingInputs.email.value = '';
-            settingInputs.mobile.value = '';
-            settingInputs.address.value = '';
-            settingInputs.platform1Name.value = 'PayPal';
-            settingInputs.platform1Email.value = '';
-            settingInputs.platform2Name.value = 'Wise';
-            settingInputs.platform2Email.value = '';
-            settingInputs.bankName.value = '';
-            settingInputs.accountNumber.value = '';
-            settingInputs.branchName.value = '';
-            settingInputs.branchCode.value = '';
-            settingInputs.swiftCode.value = '';
-            settingInputs.routingNo.value = '';
-            await saveAllSettingsFromUI(true);
-            showToast('Profile & bank details cleared!', 'info');
         });
     }
 

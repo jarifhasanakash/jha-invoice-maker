@@ -22,9 +22,9 @@
     <!-- Phosphor Icons (Regular & Bold) -->
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
-    <link rel="stylesheet" href="styles.css?v=6.7">
+    <link rel="stylesheet" href="styles.css?v=6.8">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="db.js?v=2.5"></script>
+    <script src="db.js?v=2.6"></script>
 </head>
 
 <body>
@@ -677,23 +677,23 @@
                             <div class="settings-grid">
                                 <div class="input-group">
                                     <label>First Name</label>
-                                    <input type="text" id="setting-firstName" placeholder="John">
+                                    <input type="text" id="setting-firstName" placeholder="John" autocomplete="off">
                                 </div>
                                 <div class="input-group">
                                     <label>Last Name</label>
-                                    <input type="text" id="setting-lastName" placeholder="Doe">
+                                    <input type="text" id="setting-lastName" placeholder="Doe" autocomplete="off">
                                 </div>
                                 <div class="input-group">
                                     <label>Email</label>
-                                    <input type="email" id="setting-email" placeholder="john.doe@example.com">
+                                    <input type="email" id="setting-email" placeholder="john.doe@example.com" autocomplete="off">
                                 </div>
                                 <div class="input-group">
                                     <label>Mobile Number / WhatsApp</label>
-                                    <input type="text" id="setting-mobile" placeholder="+1 (555) 234-5678">
+                                    <input type="text" id="setting-mobile" placeholder="+1 (555) 234-5678" autocomplete="off">
                                 </div>
                                 <div class="input-group" style="grid-column: span 2;">
                                     <label>Address</label>
-                                    <input type="text" id="setting-address" placeholder="Dhaka, Bangladesh">
+                                    <input type="text" id="setting-address" placeholder="Dhaka, Bangladesh" autocomplete="off">
                                 </div>
                             </div>
                         </section>
@@ -729,21 +729,21 @@
                             <div class="settings-grid settings-grid-spaced">
                                 <div class="input-group">
                                     <label>Platform #1 Name</label>
-                                    <input type="text" id="setting-platform1Name" placeholder="PayPal">
+                                    <input type="text" id="setting-platform1Name" placeholder="PayPal" autocomplete="off">
                                 </div>
                                 <div class="input-group">
                                     <label>Platform #1 Email / ID</label>
-                                    <input type="text" id="setting-platform1Email" placeholder="john.doe@example.com">
+                                    <input type="text" id="setting-platform1Email" placeholder="john.doe@example.com" autocomplete="off">
                                 </div>
                             </div>
                             <div class="settings-grid">
                                 <div class="input-group">
                                     <label>Platform #2 Name</label>
-                                    <input type="text" id="setting-platform2Name" placeholder="Wise">
+                                    <input type="text" id="setting-platform2Name" placeholder="Wise" autocomplete="off">
                                 </div>
                                 <div class="input-group">
                                     <label>Platform #2 Email / ID</label>
-                                    <input type="text" id="setting-platform2Email" placeholder="john.doe@example.com">
+                                    <input type="text" id="setting-platform2Email" placeholder="john.doe@example.com" autocomplete="off">
                                 </div>
                             </div>
                         </section>
@@ -754,34 +754,30 @@
                             <div class="settings-grid">
                                 <div class="input-group">
                                     <label>Bank Name</label>
-                                    <input type="text" id="setting-bankName" placeholder="Matir Bank">
+                                    <input type="text" id="setting-bankName" placeholder="Matir Bank" autocomplete="off">
                                 </div>
                                 <div class="input-group">
                                     <label>A/C No</label>
-                                    <input type="text" id="setting-accountNumber" placeholder="9876543210">
+                                    <input type="text" id="setting-accountNumber" placeholder="9876543210" autocomplete="off">
                                 </div>
                                 <div class="input-group">
                                     <label>Branch Name</label>
-                                    <input type="text" id="setting-branchName" placeholder="Uttara Branch">
+                                    <input type="text" id="setting-branchName" placeholder="Uttara Branch" autocomplete="off">
                                 </div>
                                 <div class="input-group">
                                     <label>Branch Code</label>
-                                    <input type="text" id="setting-branchCode" placeholder="102">
+                                    <input type="text" id="setting-branchCode" placeholder="102" autocomplete="off">
                                 </div>
                                 <div class="input-group">
                                     <label>SWIFT Code</label>
-                                    <input type="text" id="setting-swiftCode" placeholder="CHASUS33XXX">
+                                    <input type="text" id="setting-swiftCode" placeholder="CHASUS33XXX" autocomplete="off">
                                 </div>
                                 <div class="input-group">
                                     <label>Routing No</label>
-                                    <input type="text" id="setting-routingNo" placeholder="021000021">
+                                    <input type="text" id="setting-routingNo" placeholder="021000021" autocomplete="off">
                                 </div>
                             </div>
-                            <div class="settings-actions-bar" style="margin-top: 18px; display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap;">
-                                <button id="clear-settings-btn" type="button" class="secondary-btn remove-logo-btn" style="padding: 10px 18px; display: inline-flex; align-items: center; gap: 6px;">
-                                    <i class="ph ph-trash"></i>
-                                    <span>Clear Profile &amp; Bank Fields</span>
-                                </button>
+                            <div class="settings-actions-bar" style="margin-top: 18px; display: flex; justify-content: flex-end;">
                                 <button id="save-settings-btn" type="button" class="primary-btn" style="padding: 10px 22px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
                                     <i class="ph ph-check-circle" style="font-size: 1.1rem;"></i>
                                     <span>Save Profile &amp; Bank Details</span>
@@ -891,8 +887,8 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="sync-code.js?v=1.6"></script>
-    <script src="script.js?v=4.7"></script>
+    <script src="sync-code.js?v=1.7"></script>
+    <script src="script.js?v=4.8"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
