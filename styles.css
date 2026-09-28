@@ -4734,8 +4734,23 @@ button i.ph {
 }
 
 /* ========================================================
-   Print Layout Final Guarantees (Desktop & Mobile)
+   Print & PDF Layout Guarantees (Desktop & Mobile)
    ======================================================== */
+body.is-printing .sidebar,
+body.is-printing .top-nav-bar,
+body.is-printing .preview-top-bar,
+body.is-printing .app-top-bar,
+body.is-printing .nav-tabs-group,
+body.is-printing .mobile-bottom-nav,
+body.is-printing #mobile-bottom-nav,
+body.is-printing .preview-toolbar,
+body.is-printing .toast-container,
+body.is-printing .datepicker-popup,
+body.is-printing .preview-controls,
+body.is-printing .zoom-controls {
+    display: none !important;
+}
+
 body.is-printing .app-container,
 body.is-printing .app-body,
 body.is-printing .preview-area,
@@ -4751,6 +4766,8 @@ body.is-printing .invoice-paper {
     max-height: none !important;
     overflow: visible !important;
     transform: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
 }
 
 @media print {

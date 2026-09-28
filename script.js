@@ -1829,7 +1829,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         await new Promise(r => setTimeout(r, 120));
 
-        const paperHeight = Math.max(originalPaper.scrollHeight, originalPaper.offsetHeight, 1122);
+        const paperHeight = Math.ceil(Math.max(originalPaper.scrollHeight, originalPaper.offsetHeight, 1122));
 
         // Direct 1-Click PDF Download to Downloads folder across Desktop & Mobile
         if (typeof html2pdf !== 'undefined') {
@@ -1841,14 +1841,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                     scale: 2, // High resolution Retina clarity
                     useCORS: true,
                     logging: false,
-                    width: 1080,
-                    windowWidth: 1080,
+                    x: 0,
+                    y: 0,
                     scrollX: 0,
-                    scrollY: 0
+                    scrollY: 0,
+                    width: 1080,
+                    windowWidth: 1080
                 },
                 jsPDF: {
                     unit: 'px',
-                    format: [1080, paperHeight + 10],
+                    format: [1080, paperHeight + 4],
                     orientation: 'portrait',
                     hotfixes: ['px_scaling']
                 }
