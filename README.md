@@ -22,7 +22,7 @@ A high-performance, browser-native invoice application designed for freelancers,
 ## 🚀 Live Demo
 
 Open on any PC, Mac, iPhone, or Android device:
-**[https://your-username.github.io/invoice-maker/](https://your-username.github.io/invoice-maker/)**
+**[https://jarifhasanakash.github.io/jha-invoice-maker/](https://jarifhasanakash.github.io/jha-invoice-maker/)**
 
 ---
 
