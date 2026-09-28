@@ -340,11 +340,70 @@ const SyncCode = (() => {
 
         const localTime = new Date(local.lastUpdated || 0).getTime();
         const remoteTime = new Date(remote.lastUpdated || remote.exportedAt || 0).getTime();
+        const remoteIsNewer = (remoteTime >= localTime);
 
-        if (remoteTime > localTime) {
-            merged.profile = { ...local.profile, ...remote.profile };
-            merged.settings = { ...local.settings, ...remote.settings };
+        // 1. Deep-merge Profile (Personal details, PayPal, bank, logo)
+        const localProf = local.profile || {};
+        const remoteProf = remote.profile || {};
+        const mergedProf = { ...localProf };
+
+        const hasText = (val) => typeof val === 'string' && val.trim().length > 0;
+
+        ['firstName', 'lastName', 'email', 'mobile', 'address'].forEach(f => {
+            if (remoteIsNewer) {
+                if (hasText(remoteProf[f])) mergedProf[f] = remoteProf[f];
+            } else {
+                if (!hasText(localProf[f]) && hasText(remoteProf[f])) mergedProf[f] = remoteProf[f];
+            }
+        });
+
+        // Company Logo
+        if (remoteProf.companyLogo && (remoteIsNewer || !localProf.companyLogo)) {
+            mergedProf.companyLogo = remoteProf.companyLogo;
         }
+
+        // Payment Platforms (PayPal, Wise)
+        if (Array.isArray(remoteProf.platforms) && remoteProf.platforms.length > 0) {
+            if (remoteIsNewer || !Array.isArray(localProf.platforms) || localProf.platforms.length === 0) {
+                mergedProf.platforms = remoteProf.platforms;
+            } else {
+                mergedProf.platforms = remoteProf.platforms.map((rp, idx) => {
+                    const lp = (localProf.platforms && localProf.platforms[idx]) || {};
+                    return {
+                        id: rp.id || lp.id || `platform${idx+1}`,
+                        name: rp.name || lp.name || (idx === 0 ? 'PayPal' : 'Wise'),
+                        email: (remoteIsNewer && hasText(rp.email)) ? rp.email : (lp.email || rp.email || '')
+                    };
+                });
+            }
+        }
+
+        // Bank Details (Deep merge)
+        const localBank = localProf.bank || {};
+        const remoteBank = remoteProf.bank || {};
+        const mergedBank = { ...localBank };
+        ['bankName', 'accountNumber', 'branchName', 'branchCode', 'swiftCode', 'routingNo'].forEach(bf => {
+            if (remoteIsNewer) {
+                if (hasText(remoteBank[bf])) mergedBank[bf] = remoteBank[bf];
+            } else {
+                if (!hasText(localBank[bf]) && hasText(remoteBank[bf])) mergedBank[bf] = remoteBank[bf];
+            }
+        });
+        mergedProf.bank = mergedBank;
+        merged.profile = mergedProf;
+
+        // 2. Settings (Currency, Note, Due days)
+        const localSettings = local.settings || {};
+        const remoteSettings = remote.settings || {};
+        const mergedSettings = { ...localSettings };
+        if (remoteIsNewer) {
+            Object.assign(mergedSettings, remoteSettings);
+        } else {
+            if (!mergedSettings.currency && remoteSettings.currency) mergedSettings.currency = remoteSettings.currency;
+            if (!mergedSettings.currencySymbol && remoteSettings.currencySymbol) mergedSettings.currencySymbol = remoteSettings.currencySymbol;
+            if (!mergedSettings.defaultNote && remoteSettings.defaultNote) mergedSettings.defaultNote = remoteSettings.defaultNote;
+        }
+        merged.settings = mergedSettings;
 
         // Merge clients by ID
         const clientMap = new Map();

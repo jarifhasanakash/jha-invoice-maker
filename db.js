@@ -16,26 +16,35 @@ const InvoiceDB = (() => {
         version: '2.0',
         lastUpdated: new Date().toISOString(),
         profile: {
-            firstName: '',
-            lastName: '',
-            email: '',
-            mobile: '',
-            address: '',
+            firstName: 'John',
+            lastName: 'Doe',
+            email: 'john.doe@example.com',
+            mobile: '+1 (555) 234-5678',
+            address: '742 Evergreen Terrace, Springfield, OR',
             companyLogo: null,
             platforms: [
-                { id: 'platform1', name: 'Payoneer', email: '' },
-                { id: 'platform2', name: 'Wise', email: '' }
+                { id: 'platform1', name: 'PayPal', email: 'john.doe@example.com' },
+                { id: 'platform2', name: 'Wise', email: 'john.doe@example.com' }
             ],
             bank: {
-                bankName: '',
-                accountNumber: '',
-                branchName: '',
-                branchCode: '',
-                swiftCode: '',
-                routingNo: ''
+                bankName: 'Chase Bank',
+                accountNumber: '9876543210',
+                branchName: 'Downtown Branch',
+                branchCode: '102',
+                swiftCode: 'CHASUS33XXX',
+                routingNo: '021000021'
             }
         },
-        clients: [],
+        clients: [
+            {
+                id: 'client_sample_1',
+                name: 'Acme Corporation',
+                location: 'San Francisco, CA, USA',
+                email: 'billing@acme.example.com',
+                phone: '+1 415-555-0199',
+                notes: 'Payment terms: 14 days'
+            }
+        ],
         invoices: [],
         settings: {
             lastInvoiceNumber: '0001',
@@ -101,7 +110,7 @@ const InvoiceDB = (() => {
                 schema.profile.address = parsedBank.address || schema.profile.address;
 
                 schema.profile.platforms = [
-                    { id: 'platform1', name: parsedBank.platform1Name || 'Payoneer', email: parsedBank.platform1Email || schema.profile.email },
+                    { id: 'platform1', name: (parsedBank.platform1Name === 'Payoneer' ? 'PayPal' : (parsedBank.platform1Name || 'PayPal')), email: parsedBank.platform1Email || schema.profile.email },
                     { id: 'platform2', name: parsedBank.platform2Name || 'Wise', email: parsedBank.platform2Email || schema.profile.email }
                 ];
 

@@ -3153,6 +3153,13 @@ input[type="checkbox"]:checked::before {
     color: var(--text-subtle);
 }
 
+.client-card-info {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    padding-right: 12px;
+}
+
 .client-card-meta {
     display: flex;
     flex-wrap: wrap;
@@ -3165,6 +3172,22 @@ input[type="checkbox"]:checked::before {
     display: inline-flex;
     align-items: center;
     gap: 4px;
+    max-width: 100%;
+}
+
+.client-card-email {
+    display: inline-block;
+    max-width: 230px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+@media screen and (max-width: 768px) {
+    .client-card-email {
+        max-width: 140px;
+    }
 }
 
 .client-card-notes {
@@ -3172,6 +3195,10 @@ input[type="checkbox"]:checked::before {
     color: var(--text-dark);
     margin-top: 6px;
     font-style: italic;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    max-width: 100%;
 }
 
 .client-card-actions {
