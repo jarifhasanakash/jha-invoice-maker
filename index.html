@@ -22,9 +22,9 @@
     <!-- Phosphor Icons (Regular & Bold) -->
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
-    <link rel="stylesheet" href="styles.css?v=6.6">
+    <link rel="stylesheet" href="styles.css?v=6.7">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="db.js?v=2.4"></script>
+    <script src="db.js?v=2.5"></script>
 </head>
 
 <body>
@@ -777,8 +777,12 @@
                                     <input type="text" id="setting-routingNo" placeholder="021000021">
                                 </div>
                             </div>
-                            <div class="settings-actions-bar" style="margin-top: 18px; display: flex; justify-content: flex-end;">
-                                <button id="save-settings-btn" class="primary-btn" style="padding: 10px 22px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
+                            <div class="settings-actions-bar" style="margin-top: 18px; display: flex; justify-content: flex-end; gap: 12px; flex-wrap: wrap;">
+                                <button id="clear-settings-btn" type="button" class="secondary-btn remove-logo-btn" style="padding: 10px 18px; display: inline-flex; align-items: center; gap: 6px;">
+                                    <i class="ph ph-trash"></i>
+                                    <span>Clear Profile &amp; Bank Fields</span>
+                                </button>
+                                <button id="save-settings-btn" type="button" class="primary-btn" style="padding: 10px 22px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
                                     <i class="ph ph-check-circle" style="font-size: 1.1rem;"></i>
                                     <span>Save Profile &amp; Bank Details</span>
                                 </button>
@@ -887,8 +891,8 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="sync-code.js?v=1.5"></script>
-    <script src="script.js?v=4.6"></script>
+    <script src="sync-code.js?v=1.6"></script>
+    <script src="script.js?v=4.7"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

@@ -2057,12 +2057,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (dbBadge) dbBadge.addEventListener('click', openSettingsTab);
 
     function loadProfileAndSettings() {
+        const dbData = InvoiceDB.getData() || {};
         let profile = InvoiceDB.getProfile() || {};
         let settings = InvoiceDB.getSettings() || {};
         let needsSave = false;
 
-        // If first-time user / blank profile, auto-populate with realistic dummy data
-        if (!profile.firstName && !profile.lastName) {
+        // If first-time user / blank profile AND database is in demo mode, auto-populate with realistic dummy data
+        if (dbData.isDemoData && !profile.firstName && !profile.lastName) {
             profile.firstName = 'John';
             profile.lastName = 'Doe';
             profile.email = profile.email || 'john.doe@example.com';
@@ -2076,13 +2077,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             needsSave = true;
         }
 
-        if (!Array.isArray(profile.platforms) || profile.platforms.length === 0) {
+        if (dbData.isDemoData && (!Array.isArray(profile.platforms) || profile.platforms.length === 0)) {
             profile.platforms = [
                 { id: 'platform1', name: 'PayPal', email: profile.email || 'john.doe@example.com' },
                 { id: 'platform2', name: 'Wise', email: profile.email || 'john.doe@example.com' }
             ];
             needsSave = true;
-        } else {
+        } else if (Array.isArray(profile.platforms) && profile.platforms.length > 0) {
             // Replace Payoneer with PayPal
             if (profile.platforms[0] && (profile.platforms[0].name === 'Payoneer' || !profile.platforms[0].name)) {
                 profile.platforms[0].name = 'PayPal';
@@ -2090,7 +2091,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         }
 
-        if (!profile.bank || (!profile.bank.bankName && !profile.bank.accountNumber)) {
+        if (dbData.isDemoData && (!profile.bank || (!profile.bank.bankName && !profile.bank.accountNumber))) {
             profile.bank = {
                 bankName: 'Matir Bank',
                 accountNumber: '9876543210',
@@ -2100,7 +2101,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 routingNo: '021000021'
             };
             needsSave = true;
-        } else {
+        } else if (profile.bank) {
             if (profile.bank.bankName === 'Chase Bank') {
                 profile.bank.bankName = 'Matir Bank';
                 needsSave = true;
@@ -2220,16 +2221,23 @@ document.addEventListener('DOMContentLoaded', async () => {
         return settings.currencySymbol || '$';
     }
 
-    // Save all settings explicitly from UI
-    async function saveAllSettingsFromUI(notify = false) {
-        const profile = InvoiceDB.getProfile() || {};
-        const settings = InvoiceDB.getSettings() || {};
 
-        if (settingInputs.firstName) profile.firstName = settingInputs.firstName.value.trim();
-        if (settingInputs.lastName) profile.lastName = settingInputs.lastName.value.trim();
-        if (settingInputs.email) profile.email = settingInputs.email.value.trim();
-        if (settingInputs.mobile) profile.mobile = settingInputs.mobile.value.trim();
-        if (settingInputs.address) profile.address = settingInputs.address.value.trim();
+    // Save all settings explicitly from UI (Called ONLY on button click)
+    async function saveAllSettingsFromUI(notify = false) {
+        const data = InvoiceDB.getData() || {};
+        data.isDemoData = false; // User has saved custom details (or cleared details)
+
+        if (!data.profile) data.profile = {};
+        if (!data.settings) data.settings = {};
+
+        const profile = data.profile;
+        const settings = data.settings;
+
+        profile.firstName = settingInputs.firstName ? settingInputs.firstName.value.trim() : '';
+        profile.lastName = settingInputs.lastName ? settingInputs.lastName.value.trim() : '';
+        profile.email = settingInputs.email ? settingInputs.email.value.trim() : '';
+        profile.mobile = settingInputs.mobile ? settingInputs.mobile.value.trim() : '';
+        profile.address = settingInputs.address ? settingInputs.address.value.trim() : '';
 
         profile.platforms = [
             {
@@ -2245,12 +2253,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         ];
 
         if (!profile.bank) profile.bank = {};
-        if (settingInputs.bankName) profile.bank.bankName = settingInputs.bankName.value.trim();
-        if (settingInputs.accountNumber) profile.bank.accountNumber = settingInputs.accountNumber.value.trim();
-        if (settingInputs.branchName) profile.bank.branchName = settingInputs.branchName.value.trim();
-        if (settingInputs.branchCode) profile.bank.branchCode = settingInputs.branchCode.value.trim();
-        if (settingInputs.swiftCode) profile.bank.swiftCode = settingInputs.swiftCode.value.trim();
-        if (settingInputs.routingNo) profile.bank.routingNo = settingInputs.routingNo.value.trim();
+        profile.bank.bankName = settingInputs.bankName ? settingInputs.bankName.value.trim() : '';
+        profile.bank.accountNumber = settingInputs.accountNumber ? settingInputs.accountNumber.value.trim() : '';
+        profile.bank.branchName = settingInputs.branchName ? settingInputs.branchName.value.trim() : '';
+        profile.bank.branchCode = settingInputs.branchCode ? settingInputs.branchCode.value.trim() : '';
+        profile.bank.swiftCode = settingInputs.swiftCode ? settingInputs.swiftCode.value.trim() : '';
+        profile.bank.routingNo = settingInputs.routingNo ? settingInputs.routingNo.value.trim() : '';
 
         if (settingInputs.defaultNote) {
             settings.defaultNote = settingInputs.defaultNote.value;
@@ -2262,33 +2270,47 @@ document.addEventListener('DOMContentLoaded', async () => {
             settings.currencySymbol = (selectedOption && selectedOption.getAttribute('data-symbol')) || '$';
         }
 
-        await InvoiceDB.saveProfile(profile);
-        await InvoiceDB.saveSettings(settings);
+        data.profile = profile;
+        data.settings = settings;
+        await InvoiceDB.save(data);
         syncProfileToPreviewsAndDefaults();
         updateDBBadge();
 
         if (notify) {
-            showToast('Settings & bank details saved!', 'success');
+            showToast('Profile & bank details saved successfully!', 'success');
         }
     }
 
-    // Attach listeners to Settings inputs for real-time auto-saving
-    Object.keys(settingInputs).forEach(key => {
-        const input = settingInputs[key];
-        if (!input) return;
-        const eventType = (input.tagName === 'SELECT') ? 'change' : 'input';
-        input.addEventListener(eventType, async () => {
-            await saveAllSettingsFromUI(false);
-        });
-        input.addEventListener('blur', async () => {
-            await saveAllSettingsFromUI(false);
-        });
-    });
-
+    // Auto-save is TURNED OFF for Settings inputs per user request.
+    // Inputs ONLY save when the user explicitly clicks "Save Profile & Bank Details".
     const saveSettingsBtn = document.getElementById('save-settings-btn');
     if (saveSettingsBtn) {
         saveSettingsBtn.addEventListener('click', () => {
             saveAllSettingsFromUI(true);
+        });
+    }
+
+    const clearSettingsBtn = document.getElementById('clear-settings-btn');
+    if (clearSettingsBtn) {
+        clearSettingsBtn.addEventListener('click', async () => {
+            if (!confirm('Are you sure you want to clear all profile and bank details fields?')) return;
+            settingInputs.firstName.value = '';
+            settingInputs.lastName.value = '';
+            settingInputs.email.value = '';
+            settingInputs.mobile.value = '';
+            settingInputs.address.value = '';
+            settingInputs.platform1Name.value = 'PayPal';
+            settingInputs.platform1Email.value = '';
+            settingInputs.platform2Name.value = 'Wise';
+            settingInputs.platform2Email.value = '';
+            settingInputs.bankName.value = '';
+            settingInputs.accountNumber.value = '';
+            settingInputs.branchName.value = '';
+            settingInputs.branchCode.value = '';
+            settingInputs.swiftCode.value = '';
+            settingInputs.routingNo.value = '';
+            await saveAllSettingsFromUI(true);
+            showToast('Profile & bank details cleared!', 'info');
         });
     }
 
@@ -2394,12 +2416,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     resetDataBtn.addEventListener('click', async () => {
-        const confirmed = confirm('WARNING: Are you sure you want to delete all data? This will clear all clients, invoices, profile settings and database records.');
+        const confirmed = confirm('WARNING: Are you sure you want to delete all data?\n\nThis will permanently delete ALL invoices, clients, profile settings, bank details, and logo from the database.');
         if (confirmed) {
-            const doubleCheck = prompt('Type "DELETE" to confirm permanent deletion of all data:');
-            if (doubleCheck && doubleCheck.trim().toUpperCase() === 'DELETE') {
-                await InvoiceDB.resetDatabase();
-                location.reload();
+            try {
+                await InvoiceDB.deleteAllData();
+                showToast('All database records deleted!', 'info');
+                setTimeout(() => {
+                    location.reload();
+                }, 400);
+            } catch (err) {
+                console.error(err);
+                alert('Failed to delete data: ' + err.message);
             }
         }
     });
