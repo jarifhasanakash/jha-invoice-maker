@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="description" content="Professional, high-performance invoice generator with offline JSON database, live vector preview, and multi-currency support.">
+    <meta name="theme-color" content="#121316">
+    <title>JHA Invoice Maker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="icon" type="image/x-icon" href="jha-icon.png">
+    <link rel="apple-touch-icon" href="jha-icon.png">
+    <link rel="manifest" href="manifest.json">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Invoice Maker">
+    <meta name="application-name" content="JHA Invoice Maker">
+    <!-- Phosphor Icons (Regular & Bold) -->
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
+    <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
+    <link rel="stylesheet" href="styles.css?v=6.3">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="db.js"></script>
+</head>
+
+<body>
+    <div class="app-container">
+        <!-- Full-Width Top Bar -->
+        <header class="preview-top-bar app-top-bar">
+            <div class="topbar-brand-section">
+                <div class="topbar-brand">
+                    <svg class="topbar-logo" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="36" height="36">
+                        <path fill="#ea4e25" d="M38.5,294.7l-12.8,3.2C8.8,268,0,234.3,0,200,0,115.3,52.9,42.8,127.4,13.6v29.5c-59.2,27.5-100.3,87.5-100.3,156.9,0,32.2,8.9,63.7,25.9,91l-14.6,3.7ZM200,0c-7.5,0-15,.4-22.4,1.2v27.3c7.4-1,14.9-1.5,22.4-1.5,95.3,0,172.9,77.6,172.9,172.9,0,6.3-.3,12.6-1,18.8l-236.4,59.6v35.2l228.1-57.5s0,0,0,0c-23.4,67.8-87.8,116.6-163.5,116.6-40.1,0-78.9-13.9-109.8-39.4l-31.5,7.9c36.2,36.2,86.2,58.6,141.3,58.6,93.5,0,172.3-64.6,194-151.5,3-12,4.9-24.3,5.6-36.6.2-3.9.4-7.9.4-11.9C400,89.7,310.3,0,200,0ZM169.6,197c0-2.2,1-4.3,2.6-5.9,1.6-1.6,3.7-2.4,6-2.4s4.4.9,6,2.4c1.6,1.6,2.5,3.7,2.6,5.9v50.9l34.2-8.6v-42.3c0-10.8-4.2-19.9-12.6-27.3-8.4-7.4-18.4-11.1-30.1-11.1-2.9,0-5.7-.1-8.5-.4V2.3c-11.6,1.8-23,4.6-34.1,8.4v250.1l34.2-8.6v-55.2ZM295.8,217.5v-7.2c-5.5,4.1-11.8,7.1-18.4,8.9-24.1,6.4-43.6-7.5-43.6-31.1s19.5-47.9,43.6-54.4c6-1.7,12.3-2,18.4-.9v-3.8l34.1-9.1v88.4l-34.2,9.2ZM286.1,174.4c0-1.7-.5-3.4-1.4-4.9-.9-1.5-2.3-2.6-3.9-3.3-1.6-.7-3.4-.9-5.1-.6-1.7.3-3.3,1.1-4.5,2.4-1.2,1.2-2.1,2.8-2.4,4.5-.4,1.7-.2,3.5.5,5.1.7,1.6,1.8,3,3.2,4,1.4,1,3.1,1.5,4.9,1.5,1.1,0,2.3-.2,3.3-.6,1.1-.4,2-1.1,2.8-1.9.8-.8,1.5-1.7,1.9-2.8.4-1,.7-2.2.7-3.3ZM118.3,141.4v-16.6l-34.1,9v16.6l34.1-9ZM84.2,326.7l34.1-8.6v-160l-34.1,8.5v124.8l-26.5,6.7-27.8,7c6.5,10.5,14,20.4,22.4,29.6l5-1.3,25.5-6.4,1.4-.3Z"></path>
+                    </svg>
+                    <div class="topbar-brand-text">
+                        <span class="topbar-brand-title">JHA Invoice Maker</span>
+                    </div>
+                </div>
+            </div>
+            <div class="topbar-left">
+                <nav class="nav-tabs-group" role="tablist">
+                    <button id="tab-btn-new" class="nav-tab-btn active" role="tab" aria-selected="true" data-tab="tab-invoice" title="Invoice Editor">
+                        <i class="ph ph-plus"></i>
+                        <span>New</span>
+                    </button>
+                    <button id="tab-btn-history" class="nav-tab-btn" role="tab" aria-selected="false" data-tab="tab-history" title="History & Earnings">
+                        <i class="ph ph-chart-bar"></i>
+                        <span>History</span>
+                    </button>
+                    <button id="tab-btn-clients" class="nav-tab-btn" role="tab" aria-selected="false" data-tab="tab-clients" title="Manage Clients">
+                        <i class="ph ph-users"></i>
+                        <span>Clients</span>
+                    </button>
+                    <button id="tab-btn-settings" class="nav-tab-btn" role="tab" aria-selected="false" data-tab="tab-settings" title="Settings & Database">
+                        <i class="ph ph-gear"></i>
+                        <span>Settings</span>
+                    </button>
+                </nav>
+            </div>
+            <div class="topbar-right">
+                <button id="save-invoice-btn" class="topbar-btn secondary-btn topbar-save-btn" title="Save this invoice to JSON Database">
+                    <i class="ph ph-floppy-disk"></i>
+                    <span>Save Invoice</span>
+                </button>
+                <button id="print-btn" class="primary-btn topbar-download-btn" title="Save and download vector print PDF">
+                    <i class="ph ph-file-pdf"></i>
+                    <span>Download PDF</span>
+                </button>
+            </div>
+        </header>
+
+        <div class="app-body">
+            <!-- Sidebar Controls (Left Column) -->
+            <aside class="sidebar">
+                <!-- Active Editing Notice Banner (moved to preview toolbar) -->
+                <div id="editing-banner" class="editing-banner hidden" style="display: none !important;">
+                    <span id="editing-invoice-no" style="display: none;">#0001</span>
+                    <button id="cancel-edit-btn" style="display: none;"></button>
+                </div>
+
+                <div id="sidebar-invoice-controls" class="controls">
+                <!-- Invoice Details Section -->
+                <section class="control-group">
+                    <h3>Invoice Details</h3>
+                    <div class="input-grid-2">
+                        <div class="input-group">
+                            <label for="invoiceNumber">Invoice Number</label>
+                            <input type="text" id="invoiceNumber" value="0001">
+                        </div>
+                        <div class="input-group date-picker-group">
+                            <label for="invoiceDate">Date</label>
+                            <div class="custom-datepicker-container" id="customDatePicker">
+                                <input type="text" id="invoiceDate" class="custom-date-input" readonly placeholder="DD-MMM-YYYY" value="" autocomplete="off">
+                                <span class="datepicker-calendar-icon" aria-hidden="true">
+                                    <i class="ph ph-calendar-blank"></i>
+                                </span>
+                                <div class="datepicker-popup hidden" id="datepickerPopup" role="dialog" aria-modal="true" aria-label="Select Date">
+                                    <div class="cal-header">
+                                        <button type="button" class="cal-nav-btn" id="calPrevMonth" title="Previous Month" aria-label="Previous Month">
+                                            <i class="ph ph-caret-left"></i>
+                                        </button>
+                                        <div class="cal-month-year" id="calMonthYear"></div>
+                                        <button type="button" class="cal-nav-btn" id="calNextMonth" title="Next Month" aria-label="Next Month">
+                                            <i class="ph ph-caret-right"></i>
+                                        </button>
+                                    </div>
+                                    <div class="cal-weekdays">
+                                        <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                                    </div>
+                                    <div class="cal-days-grid" id="calDaysGrid"></div>
+                                    <div class="cal-footer">
+                                        <button type="button" class="cal-today-btn" id="calTodayBtn">Today</button>
+                                        <button type="button" class="cal-close-btn" id="calCloseBtn">Close</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Client Section -->
+                <section class="control-group">
+                    <h3>Client</h3>
+                    <div class="input-group">
+                        <select id="client-select">
+                            <option value="">Select a Client</option>
+                        </select>
+                    </div>
+                </section>
+
+                <!-- Line Items Section -->
+                <section class="control-group">
+                    <div class="section-header-flex">
+                        <h3>Line Items</h3>
+                        <span id="items-count-badge" class="sub-badge">1 item</span>
+                    </div>
+                    <div id="items-container">
+                        <!-- Items injected via JS -->
+                    </div>
+                    <button id="add-item-btn" class="secondary-btn"><i class="ph ph-plus"></i> Add Item</button>
+                </section>
+
+                <!-- Payment Breakdown Section -->
+                <section class="control-group">
+                    <h3>Payment Breakdown</h3>
+                    <div class="toggles-group">
+                        <div class="toggle-card" id="advanceToggleCard">
+                            <div class="toggle-row">
+                                <label for="toggleAdvance">Include advance payment</label>
+                                <input type="checkbox" id="toggleAdvance">
+                            </div>
+                            <div class="toggle-expand-content hidden" id="advanceInputGroup">
+                                <div class="toggle-divider"></div>
+                                <div class="toggle-input-section">
+                                    <label for="advanceAmount">Advance Amount</label>
+                                    <input type="number" id="advanceAmount" value="0" step="any" placeholder="00">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="toggle-card" id="balanceToggleCard">
+                            <div class="toggle-row">
+                                <label for="toggleBalance">Include balance due</label>
+                                <input type="checkbox" id="toggleBalance">
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                </div>
+
+                <!-- Settings Left Sidebar: 6-Digit Device Sync -->
+                <div id="sidebar-settings-panel" class="sidebar-settings-panel hidden">
+                    <div class="sidebar-settings-header">
+                        <div class="sidebar-settings-title-row">
+                            <i class="ph ph-arrows-left-right"></i>
+                            <h3>Device Sync</h3>
+                        </div>
+                        <p class="sidebar-settings-desc">Sync your invoices &amp; clients between your PC and phone using a private 6-digit code. Zero camera access, 100% encrypted.</p>
+                    </div>
+
+                    <!-- Generate Code Card (Send to other device) -->
+                    <div class="sidebar-code-card">
+                        <div class="sidebar-code-header">
+                            <span class="code-card-label"><i class="ph ph-arrow-up-right"></i> Send to Phone / Device</span>
+                            <div class="sync-timer-badge">
+                                <i class="ph ph-clock"></i>
+                                <span id="sidebar-sync-timer">05:00</span>
+                            </div>
+                        </div>
+
+                        <div class="sidebar-code-box">
+                            <div id="sidebar-code-digits" class="sync-digits-display">--- ---</div>
+                            <div class="sync-progress-track">
+                                <div id="sidebar-sync-progress" class="sync-progress-fill" style="width: 100%;"></div>
+                            </div>
+                        </div>
+
+                        <p id="sidebar-code-status" class="sync-status-hint">Generating secure 5-minute code...</p>
+
+                        <div class="sidebar-code-actions">
+                            <button id="sidebar-copy-code-btn" class="secondary-btn sync-btn-sm" title="Copy code to clipboard">
+                                <i class="ph ph-copy"></i> <span>Copy Code</span>
+                            </button>
+                            <button id="sidebar-gen-code-btn" class="primary-btn sync-btn-sm" title="Generate fresh 5-minute code">
+                                <i class="ph ph-arrows-clockwise"></i> <span>New Code</span>
+                            </button>
+                        </div>
+
+                        <div id="sidebar-sync-stats" class="sync-stats-pill">
+                            Invoices &amp; clients ready to sync
+                        </div>
+                    </div>
+
+                    <!-- Receive Code Card (Enter from other device) -->
+                    <div class="sidebar-receive-card">
+                        <span class="code-card-label"><i class="ph ph-arrow-down-left"></i> Receive from another Device</span>
+                        <p class="sync-receive-hint">Enter the 6-digit code displayed on your phone or other device:</p>
+                        <div class="sync-input-row">
+                            <input type="text" id="sidebar-input-code" placeholder="e.g. 582 914" maxlength="7" autocomplete="off" spellcheck="false">
+                            <button id="sidebar-submit-code-btn" class="primary-btn">
+                                <i class="ph ph-arrow-down-left"></i> <span>Sync</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="sidebar-sync-steps">
+                        <h4><i class="ph ph-info"></i> How it works:</h4>
+                        <ol>
+                            <li>Open JHA Invoice Maker on your phone.</li>
+                            <li>Go to <strong>Settings</strong> &gt; <strong>Device Sync</strong>.</li>
+                            <li>Type the 6-digit code shown above before the 5-minute timer expires!</li>
+                        </ol>
+                    </div>
+                </div>
+            </aside>
+
+        <!-- Main Preview Area -->
+        <main class="preview-area">
+            <!-- Tab Content Views -->
+            <div class="tab-content-area">
+                <!-- Tab 1: Invoice Preview / Editor -->
+                <div id="view-invoice" class="tab-pane active">
+                    <!-- Zoom & Preview Toolbar -->
+                    <div class="preview-toolbar">
+                        <div class="toolbar-left">
+                            <span class="toolbar-label">Preview</span>
+                            <span class="toolbar-doc-title" id="toolbar-doc-title">Invoice #0001</span>
+                            <span id="preview-editing-chip" class="preview-editing-chip hidden" title="Currently editing this saved invoice">
+                                <span>Editing</span>
+                                <button id="cancel-edit-chip-btn" class="cancel-edit-chip-btn" title="Exit edit mode & start fresh invoice"><i class="ph ph-x"></i></button>
+                            </span>
+                        </div>
+                        <div class="zoom-controls toolbar-zoom-controls">
+                            <button id="zoom-out-btn" class="zoom-btn" title="Zoom Out"><i class="ph ph-minus"></i></button>
+                            <span id="zoom-level" class="zoom-level-indicator" title="Click to reset zoom (100%)">100%</span>
+                            <button id="zoom-in-btn" class="zoom-btn" title="Zoom In"><i class="ph ph-plus"></i></button>
+                            <button id="zoom-fit-btn" class="zoom-btn" title="Fit to Screen"><i class="ph ph-corners-out"></i> Fit</button>
+                        </div>
+                    </div>
+
+                    <div class="preview-wrapper">
+                        <div id="invoice-preview" class="invoice-paper">
+                            <div class="invoice-main-content">
+                                <!-- Invoice Header -->
+                                <div class="invoice-header">
+                                    <div class="invoice-logo">
+                                        <svg id="Layer_1" xmlns="http://www.w3.org/2000/svg" version="1.1" viewBox="0 0 400 400"
+                                            width="140" height="140">
+                                            <path fill="#ea4e25"
+                                                d="M38.5,294.7l-12.8,3.2C8.8,268,0,234.3,0,200,0,115.3,52.9,42.8,127.4,13.6v29.5c-59.2,27.5-100.3,87.5-100.3,156.9,0,32.2,8.9,63.7,25.9,91l-14.6,3.7ZM200,0c-7.5,0-15,.4-22.4,1.2v27.3c7.4-1,14.9-1.5,22.4-1.5,95.3,0,172.9,77.6,172.9,172.9,0,6.3-.3,12.6-1,18.8l-236.4,59.6v35.2l228.1-57.5s0,0,0,0c-23.4,67.8-87.8,116.6-163.5,116.6-40.1,0-78.9-13.9-109.8-39.4l-31.5,7.9c36.2,36.2,86.2,58.6,141.3,58.6,93.5,0,172.3-64.6,194-151.5,3-12,4.9-24.3,5.6-36.6.2-3.9.4-7.9.4-11.9C400,89.7,310.3,0,200,0ZM169.6,197c0-2.2,1-4.3,2.6-5.9,1.6-1.6,3.7-2.4,6-2.4s4.4.9,6,2.4c1.6,1.6,2.5,3.7,2.6,5.9v50.9l34.2-8.6v-42.3c0-10.8-4.2-19.9-12.6-27.3-8.4-7.4-18.4-11.1-30.1-11.1-2.9,0-5.7-.1-8.5-.4V2.3c-11.6,1.8-23,4.6-34.1,8.4v250.1l34.2-8.6v-55.2ZM295.8,217.5v-7.2c-5.5,4.1-11.8,7.1-18.4,8.9-24.1,6.4-43.6-7.5-43.6-31.1s19.5-47.9,43.6-54.4c6-1.7,12.3-2,18.4-.9v-3.8l34.1-9.1v88.4l-34.2,9.2ZM286.1,174.4c0-1.7-.5-3.4-1.4-4.9-.9-1.5-2.3-2.6-3.9-3.3-1.6-.7-3.4-.9-5.1-.6-1.7.3-3.3,1.1-4.5,2.4-1.2,1.2-2.1,2.8-2.4,4.5-.4,1.7-.2,3.5.5,5.1.7,1.6,1.8,3,3.2,4,1.4,1,3.1,1.5,4.9,1.5,1.1,0,2.3-.2,3.3-.6,1.1-.4,2-1.1,2.8-1.9.8-.8,1.5-1.7,1.9-2.8.4-1,.7-2.2.7-3.3ZM118.3,141.4v-16.6l-34.1,9v16.6l34.1-9ZM84.2,326.7l34.1-8.6v-160l-34.1,8.5v124.8l-26.5,6.7-27.8,7c6.5,10.5,14,20.4,22.4,29.6l5-1.3,25.5-6.4,1.4-.3Z" />
+                                        </svg>
+                                    </div>
+                                    <div class="invoice-meta">
+                                        <div class="invoice-title-row">
+                                            <h1 class="invoice-type">Invoice</h1>
+                                            <span class="invoice-title-sep">|</span>
+                                            <h2 class="client-name-large" id="preview-client-name-header">Client Name</h2>
+                                        </div>
+                                        <div class="meta-row">
+                                            <div class="meta-item">
+                                                <span class="label">No.</span>
+                                                <span class="value" id="preview-number">0000</span>
+                                            </div>
+                                            <span class="meta-row-sep">|</span>
+                                            <div class="meta-item">
+                                                <span class="label">Date:</span>
+                                                <span class="value" id="preview-date">26-Sep-2026</span>
+                                            </div>
+                                        </div>
+                                        <div class="invoice-parties">
+                                            <div class="party from">
+                                                <h3>From</h3>
+                                                <div class="party-details">
+                                                    <div class="name" id="preview-from-name">Jarif Hasan</div>
+                                                    <div class="sub" id="preview-from-location">Dhaka, Bangladesh</div>
+                                                    <div class="sub" id="preview-from-email">jarif.hasan@example.com</div>
+                                                </div>
+                                            </div>
+                                            <div class="party to">
+                                                <h3>To</h3>
+                                                <div class="party-details">
+                                                    <div class="name" id="preview-to-name">Client Name</div>
+                                                    <div class="sub" id="preview-to-location">City/State, Country</div>
+                                                    <div class="sub" id="preview-to-email">client@example.com</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Invoice Line Items Table -->
+                                <div class="invoice-items">
+                                    <div class="items-table-container">
+                                        <div class="items-header">
+                                            <div class="col-desc">Description</div>
+                                            <div class="col-divider"></div>
+                                            <div class="col-amount">AMOUNT</div>
+                                        </div>
+                                        <div id="preview-items-list">
+                                            <!-- Items injected here -->
+                                        </div>
+                                    </div>
+                                    <div class="items-total">
+                                        <div class="label">TOTAL</div>
+                                        <div class="amount">
+                                            <span class="preview-currency-symbol">$</span><span id="preview-total">0.00</span>
+                                        </div>
+                                    </div>
+                                    <div class="invoice-payment-breakdown">
+                                        <div class="breakdown-row" id="row-advance">
+                                            <div class="label">Pay in Advance</div>
+                                            <div class="amount"><span class="preview-currency-symbol">$</span> <span id="preview-advance">0.00</span></div>
+                                        </div>
+                                        <div class="breakdown-row" id="row-balance">
+                                            <div class="label">Pay upon Completion</div>
+                                            <div class="amount"><span class="preview-currency-symbol">$</span> <span id="preview-balance">0.00</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="invoice-note">
+                                        <div class="note-lbl">Note</div>
+                                        <div class="note-sep">:</div>
+                                        <div class="note-text" id="preview-note-text">Please complete your payment within 14 days, your cooperation is
+                                            greatly appreciated.</div>
+                                    </div>
+                                </div>
+
+                                <!-- Invoice Footer / Payment Information -->
+                                <div class="invoice-footer-info">
+                                    <h3>Payment info</h3>
+                                    <div class="payment-methods">
+                                        <div class="col" id="preview-col-platform1">
+                                            <h4 id="preview-platform1-name">Payoneer</h4>
+                                            <div class="row" id="preview-row-platform1-email"><span
+                                                    class="lbl">Email</span><span class="sep">:</span><span class="val"
+                                                    id="preview-platform1-email">jarif.hasan@example.com</span>
+                                            </div>
+                                        </div>
+                                        <div class="col" id="preview-col-platform2">
+                                            <h4 id="preview-platform2-name">Wise</h4>
+                                            <div class="row" id="preview-row-platform2-email"><span
+                                                    class="lbl">Email</span><span class="sep">:</span><span class="val"
+                                                    id="preview-platform2-email">jarif.hasan@example.com</span></div>
+                                        </div>
+                                    </div>
+                                    <div class="divider"></div>
+                                    <div class="bank-details">
+                                        <div class="bank-col-left">
+                                            <div class="bank-header">
+                                                <h4>Bank</h4>
+                                            </div>
+                                            <div class="row" id="preview-row-first-name"><span class="lbl">First
+                                                    Name</span><span class="sep">:</span><span class="val"
+                                                    id="preview-first-name">Jarif</span></div>
+                                            <div class="row" id="preview-row-last-name"><span class="lbl">Last Name</span><span
+                                                    class="sep">:</span><span class="val" id="preview-last-name">Hasan</span>
+                                            </div>
+                                            <div class="row" id="preview-row-address"><span class="lbl">Address</span><span
+                                                    class="sep">:</span><span class="val" id="preview-address">Dhaka,
+                                                    Bangladesh</span></div>
+                                            <div class="row" id="preview-row-account-number"><span class="lbl">A/C
+                                                    No</span><span class="sep">:</span><span class="val"
+                                                    id="preview-account-number">1234567890</span></div>
+                                        </div>
+                                        <div class="bank-col-right">
+                                            <div class="row" id="preview-row-bank-name"><span class="lbl">Bank Name</span><span
+                                                    class="sep">:</span><span class="val" id="preview-bank-name">Dhaka
+                                                    Bank</span></div>
+                                            <div class="row" id="preview-row-branch-name"><span class="lbl">Branch
+                                                    Name</span><span class="sep">:</span><span class="val"
+                                                    id="preview-branch-name">Banani Branch</span></div>
+                                            <div class="row" id="preview-row-branch-code"><span class="lbl">Branch
+                                                    Code</span><span class="sep">:</span><span class="val"
+                                                    id="preview-branch-code">012</span></div>
+                                            <div class="row" id="preview-row-swift-code"><span class="lbl">SWIFT
+                                                    Code</span><span class="sep">:</span><span class="val"
+                                                    id="preview-swift-code">DHAKBDDHXXX</span></div>
+                                            <div class="row" id="preview-row-routing-no"><span class="lbl">Routing
+                                                    No</span><span class="sep">:</span><span class="val"
+                                                    id="preview-routing-no">085260123</span></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Thank You & Signature Footer -->
+                            <div class="invoice-thank-you">
+                                <h2>Thank you!</h2>
+                                <div class="signature">
+                                    <span class="name" id="preview-signature-name">Jarif Hasan</span>
+                                    <span id="preview-mobile-divider" class="signature-divider">|</span>
+                                    <span id="preview-mobile-container" class="contact">WhatsApp: <span id="preview-mobile">+880
+                                            1700-000000</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Invoice History & Earnings View -->
+                <div id="view-history" class="tab-pane tab-pane-page">
+                    <div class="tab-page-container">
+                        <div class="tab-page-header">
+                            <div>
+                                <h2><i class="ph ph-chart-bar"></i> Invoice History & Earnings</h2>
+                                <p class="tab-page-subtitle">Track, filter, export and manage all created invoices</p>
+                            </div>
+                        </div>
+
+                        <!-- Summary Stats Cards -->
+                        <section class="stats-overview">
+                            <div class="stat-card">
+                                <span class="stat-label">Total Invoiced</span>
+                                <div id="stat-total-invoiced" class="stat-value">$0.00</div>
+                            </div>
+                            <div class="stat-card stat-paid">
+                                <span class="stat-label">Total Paid</span>
+                                <div id="stat-total-paid" class="stat-value">$0.00</div>
+                            </div>
+                            <div class="stat-card stat-pending">
+                                <span class="stat-label">Pending / Unpaid</span>
+                                <div id="stat-total-pending" class="stat-value">$0.00</div>
+                            </div>
+                            <div class="stat-card">
+                                <span class="stat-label">Invoices Count</span>
+                                <div id="stat-invoices-count" class="stat-value">0</div>
+                            </div>
+                        </section>
+
+                        <!-- Filters & Search -->
+                        <section class="settings-section">
+                            <div class="history-filter-bar">
+                                <div class="input-group search-input-group">
+                                    <label>Search Invoices</label>
+                                    <div class="search-box">
+                                        <i class="ph ph-magnifying-glass"></i>
+                                        <input type="text" id="history-search-input" placeholder="Search by invoice #, client...">
+                                    </div>
+                                </div>
+                                <div class="input-group">
+                                    <label>Status</label>
+                                    <select id="history-status-filter">
+                                        <option value="ALL">All Statuses</option>
+                                        <option value="Paid">Paid</option>
+                                        <option value="Pending">Pending</option>
+                                        <option value="Draft">Draft</option>
+                                        <option value="Overdue">Overdue</option>
+                                    </select>
+                                </div>
+                                <div class="input-group date-picker-group">
+                                    <label>From Date</label>
+                                    <div class="custom-datepicker-container" id="historyFromDatePicker">
+                                        <input type="text" id="history-from-date" class="custom-date-input" readonly placeholder="DD-MMM-YYYY" autocomplete="off">
+                                        <span class="datepicker-calendar-icon" aria-hidden="true">
+                                            <i class="ph ph-calendar-blank"></i>
+                                        </span>
+                                        <div class="datepicker-popup hidden" id="historyFromDatePopup" role="dialog" aria-modal="true" aria-label="Select From Date">
+                                            <div class="cal-header">
+                                                <button type="button" class="cal-nav-btn" id="historyFromCalPrev" title="Previous Month" aria-label="Previous Month">
+                                                    <i class="ph ph-caret-left"></i>
+                                                </button>
+                                                <div class="cal-month-year" id="historyFromCalMonthYear"></div>
+                                                <button type="button" class="cal-nav-btn" id="historyFromCalNext" title="Next Month" aria-label="Next Month">
+                                                    <i class="ph ph-caret-right"></i>
+                                                </button>
+                                            </div>
+                                            <div class="cal-weekdays">
+                                                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                                            </div>
+                                            <div class="cal-days-grid" id="historyFromCalGrid"></div>
+                                            <div class="cal-footer">
+                                                <button type="button" class="cal-today-btn" id="historyFromCalToday">Today</button>
+                                                <button type="button" class="cal-close-btn" id="historyFromCalClose">Clear</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="input-group date-picker-group">
+                                    <label>To Date</label>
+                                    <div class="custom-datepicker-container" id="historyToDatePicker">
+                                        <input type="text" id="history-to-date" class="custom-date-input" readonly placeholder="DD-MMM-YYYY" autocomplete="off">
+                                        <span class="datepicker-calendar-icon" aria-hidden="true">
+                                            <i class="ph ph-calendar-blank"></i>
+                                        </span>
+                                        <div class="datepicker-popup hidden" id="historyToDatePopup" role="dialog" aria-modal="true" aria-label="Select To Date">
+                                            <div class="cal-header">
+                                                <button type="button" class="cal-nav-btn" id="historyToCalPrev" title="Previous Month" aria-label="Previous Month">
+                                                    <i class="ph ph-caret-left"></i>
+                                                </button>
+                                                <div class="cal-month-year" id="historyToCalMonthYear"></div>
+                                                <button type="button" class="cal-nav-btn" id="historyToCalNext" title="Next Month" aria-label="Next Month">
+                                                    <i class="ph ph-caret-right"></i>
+                                                </button>
+                                            </div>
+                                            <div class="cal-weekdays">
+                                                <span>Su</span><span>Mo</span><span>Tu</span><span>We</span><span>Th</span><span>Fr</span><span>Sa</span>
+                                            </div>
+                                            <div class="cal-days-grid" id="historyToCalGrid"></div>
+                                            <div class="cal-footer">
+                                                <button type="button" class="cal-today-btn" id="historyToCalToday">Today</button>
+                                                <button type="button" class="cal-close-btn" id="historyToCalClose">Clear</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="export-actions-row">
+                                <button id="export-csv-btn" class="secondary-btn" title="Export filtered records as CSV"><i class="ph ph-file-csv"></i> Export Filtered CSV</button>
+                                <button id="export-invoices-json-btn" class="secondary-btn" title="Export filtered invoices as JSON"><i class="ph ph-file-code"></i> Export Filtered JSON</button>
+                            </div>
+                        </section>
+
+                        <!-- Invoices Data Table -->
+                        <section class="settings-section">
+                            <div class="data-table-wrapper">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr>
+                                            <th>No.</th>
+                                            <th>Date</th>
+                                            <th>Client</th>
+                                            <th>Amount</th>
+                                            <th>Status</th>
+                                            <th style="width: 130px; text-align: right;">Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="history-table-body">
+                                        <!-- Injected via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Client Management View -->
+                <div id="view-clients" class="tab-pane tab-pane-page">
+                    <div class="tab-page-container">
+                        <div class="tab-page-header">
+                            <div class="tab-header-flex">
+                                <div>
+                                    <h2><i class="ph ph-users"></i> Manage Clients</h2>
+                                    <p class="tab-page-subtitle">Save clients for instant one-click selection</p>
+                                </div>
+                                <span id="modal-clients-count" class="badge">0 Clients</span>
+                            </div>
+                        </div>
+
+                        <!-- Search & Add Actions -->
+                        <div class="client-toolbar">
+                            <div class="search-box">
+                                <i class="ph ph-magnifying-glass"></i>
+                                <input type="text" id="client-search-input" placeholder="Search clients by name, email, location...">
+                            </div>
+                            <button id="toggle-add-client-btn" class="primary-btn btn-auto"><i class="ph ph-user-plus"></i> Add New Client</button>
+                        </div>
+
+                        <!-- Add/Edit Client Form (Collapsible) -->
+                        <div id="client-form-container" class="client-form-container hidden">
+                            <h3 id="client-form-title"><i class="ph ph-user-plus"></i> Add New Client</h3>
+                            <input type="hidden" id="client-form-id">
+                            <div class="settings-grid">
+                                <div class="input-group" style="grid-column: span 2;">
+                                    <label>Client / Company Name <span class="required-star">*</span></label>
+                                    <input type="text" id="client-form-name" placeholder="Acme Corporation">
+                                </div>
+                                <div class="input-group">
+                                    <label>Email Address <span class="required-star">*</span></label>
+                                    <input type="email" id="client-form-email" placeholder="billing@acme.com" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>Location / City, Country <span class="required-star">*</span></label>
+                                    <input type="text" id="client-form-location" placeholder="New York, USA" required>
+                                </div>
+                                <div class="input-group">
+                                    <label>Phone / WhatsApp</label>
+                                    <input type="text" id="client-form-phone" placeholder="+1 555-0199">
+                                </div>
+                                <div class="input-group">
+                                    <label>Currency</label>
+                                    <select id="client-form-currency">
+                                        <option value="USD" data-symbol="$" selected>USD - US Dollar ($)</option>
+                                        <option value="EUR" data-symbol="€">EUR - Euro (€)</option>
+                                        <option value="GBP" data-symbol="£">GBP - British Pound (£)</option>
+                                        <option value="CAD" data-symbol="$">CAD - Canadian Dollar ($)</option>
+                                        <option value="AUD" data-symbol="$">AUD - Australian Dollar ($)</option>
+                                        <option value="BDT" data-symbol="৳">BDT - Bangladeshi Taka (৳)</option>
+                                        <option value="INR" data-symbol="₹">INR - Indian Rupee (₹)</option>
+                                        <option value="JPY" data-symbol="¥">JPY - Japanese Yen (¥)</option>
+                                        <option value="CNY" data-symbol="¥">CNY - Chinese Yuan (¥)</option>
+                                        <option value="SGD" data-symbol="$">SGD - Singapore Dollar ($)</option>
+                                        <option value="AED" data-symbol="AED">AED - UAE Dirham (AED)</option>
+                                        <option value="SAR" data-symbol="SAR">SAR - Saudi Riyal (SAR)</option>
+                                        <option value="CHF" data-symbol="CHF">CHF - Swiss Franc (CHF)</option>
+                                    </select>
+                                </div>
+                                <div class="input-group" style="grid-column: span 2;">
+                                    <label>Notes</label>
+                                    <textarea id="client-form-notes" rows="2" placeholder="e.g. Net 14 days, VAT exempt"></textarea>
+                                </div>
+                            </div>
+                            <div class="form-actions">
+                                <button id="save-client-form-btn" class="primary-btn btn-auto"><i class="ph ph-floppy-disk"></i> Save Client</button>
+                                <button id="cancel-client-form-btn" class="secondary-btn btn-auto"><i class="ph ph-x"></i> Cancel</button>
+                            </div>
+                        </div>
+
+                        <!-- Clients List -->
+                        <div id="clients-list-container" class="clients-list-container">
+                            <!-- Client cards will be injected here -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Settings & Database View -->
+                <div id="view-settings" class="tab-pane tab-pane-page">
+                    <div class="tab-page-container">
+                        <div class="tab-page-header">
+                            <div>
+                                <h2><i class="ph ph-gear"></i> App Settings & Database</h2>
+                                <p class="tab-page-subtitle">Configure issuer details, payment methods, and JSON database backup</p>
+                            </div>
+                        </div>
+
+                        <!-- Company Logo & Invoice Note Side-by-Side (50% / 50%) -->
+                        <div class="settings-row-2col">
+                            <section class="settings-section">
+                                <h3><i class="ph ph-image"></i> Company Logo</h3>
+                                <div class="logo-upload-container">
+                                    <div id="logo-preview-box" class="logo-preview-box">
+                                        <span>No Logo</span>
+                                    </div>
+                                    <div class="upload-controls">
+                                        <input type="file" id="logoInput" accept="image/*" class="hidden">
+                                        <button onclick="document.getElementById('logoInput').click()" class="secondary-btn upload-logo-btn"><i class="ph ph-upload-simple"></i> Upload Logo</button>
+                                        <button id="remove-logo" class="secondary-btn remove-logo-btn" title="Remove Logo"><i class="ph ph-trash"></i> <span class="remove-logo-text">Remove</span></button>
+                                    </div>
+                                </div>
+                            </section>
+
+                            <section class="settings-section">
+                                <h3><i class="ph ph-note"></i> Invoice Note</h3>
+                                <div class="input-group setting-note-group">
+                                    <textarea id="setting-defaultNote" placeholder="Please complete your payment within 14 days, your cooperation is greatly appreciated."></textarea>
+                                </div>
+                            </section>
+                        </div>
+
+                        <!-- Personal Profile -->
+                        <section class="settings-section">
+                            <h3><i class="ph ph-user"></i> Profile Details</h3>
+                            <p class="settings-subtitle">Default issuer information displayed in the "From" section of the invoice.</p>
+                            <div class="settings-grid">
+                                <div class="input-group">
+                                    <label>First Name</label>
+                                    <input type="text" id="setting-firstName" placeholder="Jarif">
+                                </div>
+                                <div class="input-group">
+                                    <label>Last Name</label>
+                                    <input type="text" id="setting-lastName" placeholder="Hasan">
+                                </div>
+                                <div class="input-group">
+                                    <label>Email</label>
+                                    <input type="email" id="setting-email" placeholder="jarif.hasan@example.com">
+                                </div>
+                                <div class="input-group">
+                                    <label>Mobile Number / WhatsApp</label>
+                                    <input type="text" id="setting-mobile" placeholder="+880 1700-000000">
+                                </div>
+                                <div class="input-group" style="grid-column: span 2;">
+                                    <label>Address</label>
+                                    <input type="text" id="setting-address" placeholder="Dhaka, Bangladesh">
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Currency & Regional Settings -->
+                        <section class="settings-section">
+                            <h3><i class="ph ph-currency-dollar"></i> Default Currency</h3>
+                            <div class="settings-grid">
+                                <div class="input-group" style="grid-column: span 2;">
+                                    <label for="setting-currency">Default Currency</label>
+                                    <select id="setting-currency">
+                                        <option value="USD" data-symbol="$" selected>USD - US Dollar ($)</option>
+                                        <option value="EUR" data-symbol="€">EUR - Euro (€)</option>
+                                        <option value="GBP" data-symbol="£">GBP - British Pound (£)</option>
+                                        <option value="CAD" data-symbol="$">CAD - Canadian Dollar ($)</option>
+                                        <option value="AUD" data-symbol="$">AUD - Australian Dollar ($)</option>
+                                        <option value="BDT" data-symbol="৳">BDT - Bangladeshi Taka (৳)</option>
+                                        <option value="INR" data-symbol="₹">INR - Indian Rupee (₹)</option>
+                                        <option value="JPY" data-symbol="¥">JPY - Japanese Yen (¥)</option>
+                                        <option value="CNY" data-symbol="¥">CNY - Chinese Yuan (¥)</option>
+                                        <option value="SGD" data-symbol="$">SGD - Singapore Dollar ($)</option>
+                                        <option value="AED" data-symbol="AED">AED - UAE Dirham (AED)</option>
+                                        <option value="SAR" data-symbol="SAR">SAR - Saudi Riyal (SAR)</option>
+                                        <option value="CHF" data-symbol="CHF">CHF - Swiss Franc (CHF)</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Payment Platforms -->
+                        <section class="settings-section">
+                            <h3><i class="ph ph-credit-card"></i> Payment Platforms</h3>
+                            <div class="settings-grid settings-grid-spaced">
+                                <div class="input-group">
+                                    <label>Platform #1 Name</label>
+                                    <input type="text" id="setting-platform1Name" placeholder="Payoneer">
+                                </div>
+                                <div class="input-group">
+                                    <label>Platform #1 Email / ID</label>
+                                    <input type="text" id="setting-platform1Email" placeholder="jarif.hasan@example.com">
+                                </div>
+                            </div>
+                            <div class="settings-grid">
+                                <div class="input-group">
+                                    <label>Platform #2 Name</label>
+                                    <input type="text" id="setting-platform2Name" placeholder="Wise">
+                                </div>
+                                <div class="input-group">
+                                    <label>Platform #2 Email / ID</label>
+                                    <input type="text" id="setting-platform2Email" placeholder="jarif.hasan@example.com">
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Bank Details -->
+                        <section class="settings-section">
+                            <h3><i class="ph ph-bank"></i> Bank Details</h3>
+                            <div class="settings-grid">
+                                <div class="input-group">
+                                    <label>Bank Name</label>
+                                    <input type="text" id="setting-bankName" placeholder="Dhaka Bank">
+                                </div>
+                                <div class="input-group">
+                                    <label>A/C No</label>
+                                    <input type="text" id="setting-accountNumber" placeholder="1234567890">
+                                </div>
+                                <div class="input-group">
+                                    <label>Branch Name</label>
+                                    <input type="text" id="setting-branchName" placeholder="Banani Branch">
+                                </div>
+                                <div class="input-group">
+                                    <label>Branch Code</label>
+                                    <input type="text" id="setting-branchCode" placeholder="012">
+                                </div>
+                                <div class="input-group">
+                                    <label>SWIFT Code</label>
+                                    <input type="text" id="setting-swiftCode" placeholder="DHAKBDDHXXX">
+                                </div>
+                                <div class="input-group">
+                                    <label>Routing No</label>
+                                    <input type="text" id="setting-routingNo" placeholder="085260123">
+                                </div>
+                            </div>
+                        </section>
+
+
+                        <!-- Multi-Device Sync (6-Digit End-to-End Encrypted Code) -->
+                        <section class="settings-section code-sync-section">
+                            <h3><i class="ph ph-arrows-left-right"></i> Multi-Device Sync</h3>
+                            <div class="sync-card">
+                                <div class="sync-card-header">
+                                    <div class="sync-status-main">
+                                        <span class="sync-status-indicator dot-synced"></span>
+                                        <div class="sync-status-text-block">
+                                            <h4>Private 6-Digit Device Sync</h4>
+                                            <p>Sync invoices and clients directly between your PC and phone. Zero camera access, zero accounts, and end-to-end encrypted with a 5-minute timer.</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="settings-sync-dual-grid">
+                                    <!-- Panel A: Receive from Device -->
+                                    <div class="settings-sync-col">
+                                        <div class="settings-sync-box">
+                                            <span class="code-card-label"><i class="ph ph-arrow-down-left"></i> Enter 6-Digit Sync Code</span>
+                                            <p class="sync-receive-hint">Type the 6-digit code shown on your other device to pull all records:</p>
+                                            <div class="sync-input-row">
+                                                <input type="text" id="settings-input-code" placeholder="e.g. 582 914" maxlength="7" autocomplete="off" spellcheck="false">
+                                                <button id="settings-submit-code-btn" class="primary-btn">
+                                                    <i class="ph ph-arrow-down-left"></i> <span>Connect &amp; Sync</span>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Panel B: Send to Device -->
+                                    <div class="settings-sync-col">
+                                        <div class="settings-sync-box">
+                                            <div class="sidebar-code-header">
+                                                <span class="code-card-label"><i class="ph ph-arrow-up-right"></i> Generate Sync Code</span>
+                                                <div class="sync-timer-badge">
+                                                    <i class="ph ph-clock"></i>
+                                                    <span id="settings-sync-timer">05:00</span>
+                                                </div>
+                                            </div>
+                                            <div class="sidebar-code-box">
+                                                <div id="settings-code-digits" class="sync-digits-display">--- ---</div>
+                                                <div class="sync-progress-track">
+                                                    <div id="settings-sync-progress" class="sync-progress-fill" style="width: 100%;"></div>
+                                                </div>
+                                            </div>
+                                            <div class="sidebar-code-actions">
+                                                <button id="settings-copy-code-btn" class="secondary-btn sync-btn-sm">
+                                                    <i class="ph ph-copy"></i> <span>Copy Code</span>
+                                                </button>
+                                                <button id="settings-gen-code-btn" class="primary-btn sync-btn-sm">
+                                                    <i class="ph ph-arrows-clockwise"></i> <span>Generate Code</span>
+                                                </button>
+                                            </div>
+                                            <p id="settings-code-status" class="sync-status-hint">Valid for 5 minutes. Enter on your other device.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- JSON Database Hub (Positioned before Danger Zone) -->
+                        <section class="settings-section db-hub-section">
+                            <h3><i class="ph ph-database"></i> JSON Database</h3>
+                            <div class="db-hub-card">
+                                <div class="db-hub-header">
+                                    <p style="font-size: 13px; color: #888; margin: 0;">Browser-native storage (IndexedDB + Mirror). Back up or move across devices anytime.</p>
+                                    <span class="db-status-pill">Active</span>
+                                </div>
+                                <div class="db-stats-row">
+                                    <div><strong id="db-clients-count">0</strong> Clients</div>
+                                    <div>•</div>
+                                    <div><strong id="db-invoices-count">0</strong> Invoices</div>
+                                    <div>•</div>
+                                    <div id="db-last-updated">Synced</div>
+                                </div>
+                                <div class="db-hub-buttons">
+                                    <button id="export-data-btn" class="primary-btn" style="flex: 1;"><i class="ph ph-download-simple"></i> Export JSON Database</button>
+                                    <button onclick="document.getElementById('importInput').click()" class="secondary-btn upload-logo-btn" style="flex: 1;"><i class="ph ph-upload-simple"></i> Restore JSON Database</button>
+                                    <input type="file" id="importInput" accept=".json" class="hidden">
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Danger Zone / Delete All Single Row -->
+                        <section class="settings-section danger-zone-row">
+                            <div class="danger-zone-text">
+                                <h3><i class="ph ph-warning"></i> Delete All</h3>
+                                <p class="settings-subtitle">Resetting will clear all your saved settings, clients, invoices and database records.</p>
+                            </div>
+                            <button id="reset-data-btn" class="secondary-btn remove-logo-btn btn-auto"><i class="ph ph-warning-circle"></i> Delete all data</button>
+                        </section>
+                    </div>
+                </div>
+            </div>
+        </main>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <script src="sync-code.js?v=1.2"></script>
+    <script src="script.js?v=4.3"></script>
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch((err) => {
+                    console.log('[PWA] Service worker registration note:', err);
+                });
+            });
+        }
+    </script>
+</body>
+
+</html>

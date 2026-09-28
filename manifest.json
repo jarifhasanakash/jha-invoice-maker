@@ -1,0 +1,24 @@
+{
+  "name": "JHA Invoice Maker",
+  "short_name": "InvoiceMaker",
+  "description": "Professional, privacy-first invoice generator with offline JSON database and 6-digit E2EE device sync.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#121212",
+  "theme_color": "#ea4e25",
+  "icons": [
+    {
+      "src": "jha-icon.png",
+      "sizes": "192x192 512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": [
+    "business",
+    "finance",
+    "productivity"
+  ]
+}
