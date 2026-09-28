@@ -22,9 +22,9 @@
     <!-- Phosphor Icons (Regular & Bold) -->
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
-    <link rel="stylesheet" href="styles.css?v=6.8">
+    <link rel="stylesheet" href="styles.css?v=6.9">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="db.js?v=2.6"></script>
+    <script src="db.js?v=2.7"></script>
 </head>
 
 <body>
@@ -200,7 +200,7 @@
                             </div>
                         </div>
 
-                        <p id="sidebar-code-status" class="sync-status-hint">Generating secure 5-minute code...</p>
+                        <p id="sidebar-code-status" class="sync-status-hint">Click "New Code" to generate a 5-minute sync code.</p>
 
                         <div class="sidebar-code-actions">
                             <button id="sidebar-copy-code-btn" class="secondary-btn sync-btn-sm" title="Copy code to clipboard">
@@ -413,7 +413,7 @@
                                 <div class="signature">
                                     <span class="name" id="preview-signature-name">Authorized Signature</span>
                                     <span id="preview-mobile-divider" class="signature-divider">|</span>
-                                    <span id="preview-mobile-container" class="contact">Phone: <span id="preview-mobile">+00
+                                    <span id="preview-mobile-container" class="contact">Mobile: <span id="preview-mobile">+00
                                             0000-000000</span></span>
                                 </div>
                             </div>
@@ -597,8 +597,8 @@
                                     <input type="text" id="client-form-location" placeholder="New York, USA" required>
                                 </div>
                                 <div class="input-group">
-                                    <label>Phone / WhatsApp</label>
-                                    <input type="text" id="client-form-phone" placeholder="+1 555-0199">
+                                    <label>Mobile Number</label>
+                                    <input type="tel" id="client-form-phone" placeholder="+1 555-0199">
                                 </div>
                                 <div class="input-group">
                                     <label>Currency</label>
@@ -688,8 +688,8 @@
                                     <input type="email" id="setting-email" placeholder="john.doe@example.com" autocomplete="off">
                                 </div>
                                 <div class="input-group">
-                                    <label>Mobile Number / WhatsApp</label>
-                                    <input type="text" id="setting-mobile" placeholder="+1 (555) 234-5678" autocomplete="off">
+                                    <label>Mobile Number</label>
+                                    <input type="tel" id="setting-mobile" placeholder="+1 (555) 234-5678" autocomplete="off">
                                 </div>
                                 <div class="input-group" style="grid-column: span 2;">
                                     <label>Address</label>
@@ -836,10 +836,10 @@
                                                     <i class="ph ph-copy"></i> <span>Copy Code</span>
                                                 </button>
                                                 <button id="settings-gen-code-btn" class="primary-btn sync-btn-sm">
-                                                    <i class="ph ph-arrows-clockwise"></i> <span>Generate Code</span>
+                                                    <i class="ph ph-arrows-clockwise"></i> <span>New Code</span>
                                                 </button>
                                             </div>
-                                            <p id="settings-code-status" class="sync-status-hint">Valid for 5 minutes. Enter on your other device.</p>
+                                            <p id="settings-code-status" class="sync-status-hint">Click "New Code" to generate a 5-minute sync code.</p>
                                         </div>
                                     </div>
                                 </div>
@@ -887,8 +887,8 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="sync-code.js?v=1.7"></script>
-    <script src="script.js?v=4.8"></script>
+    <script src="sync-code.js?v=1.8"></script>
+    <script src="script.js?v=4.9"></script>
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {

@@ -725,13 +725,21 @@ const SyncCode = (() => {
             });
         }
 
-        // Auto-generate code when Settings tab opens if none is active
-        const settingsTabBtn = document.getElementById('tab-btn-settings');
-        if (settingsTabBtn) {
-            settingsTabBtn.addEventListener('click', () => {
-                if (!activeSyncCode || secondsRemaining <= 0) {
-                    setTimeout(() => generateAndPublishCode(), 200);
-                }
+        // Set initial idle status if no active code
+        if (!activeSyncCode) {
+            const displays = [
+                document.getElementById('sidebar-code-digits'),
+                document.getElementById('settings-code-digits')
+            ];
+            displays.forEach(el => {
+                if (el) el.textContent = '--- ---';
+            });
+            const statusEls = [
+                document.getElementById('sidebar-code-status'),
+                document.getElementById('settings-code-status')
+            ];
+            statusEls.forEach(el => {
+                if (el) el.textContent = 'Click "New Code" to generate a 5-minute sync code.';
             });
         }
     };

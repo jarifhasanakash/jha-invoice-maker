@@ -748,8 +748,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Signature and mobile divider logic
-        const mobileVal = previews.mobile.textContent.trim();
+        const mobileVal = previews.mobile ? previews.mobile.textContent.trim() : '';
         const fullName = previews.signatureName ? previews.signatureName.textContent.trim() : '';
+        if (previews.mobileContainer) {
+            if (mobileVal) previews.mobileContainer.classList.remove('hidden');
+            else previews.mobileContainer.classList.add('hidden');
+        }
         if (previews.mobileDivider) {
             if (mobileVal && fullName) previews.mobileDivider.classList.remove('hidden');
             else previews.mobileDivider.classList.add('hidden');
@@ -1534,10 +1538,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             updateEarningsDisplay();
         } else if (tabKey === 'tab-clients') {
             renderClientsModalList(clientSearchInput ? clientSearchInput.value : '');
-        } else if (tabKey === 'tab-settings') {
-            if (window.SyncCode && typeof window.SyncCode.generateAndPublishCode === 'function') {
-                window.SyncCode.generateAndPublishCode();
-            }
         } else if (tabKey === 'tab-invoice') {
             autoFitZoom();
         }
