@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ];
     let userModifiedItems = false;
     let currentZoom = 1.0;
+    const DEFAULT_INVOICE_NOTE = 'Please complete your payment within 14 days, your cooperation is greatly appreciated.';
 
     // 3. Cache DOM Elements
     const inputs = {
@@ -33,6 +34,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         toggleBalance: document.getElementById('toggleBalance'),
         invoiceNote: document.getElementById('invoiceNote')
     };
+
+    if (inputs.invoiceNote && !inputs.invoiceNote.value.trim()) {
+        inputs.invoiceNote.value = DEFAULT_INVOICE_NOTE;
+    }
 
     // Date handling will initialize date value formatted below
 
@@ -446,7 +451,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Note: pulled from New page Invoice Note input
         const noteVal = inputs.invoiceNote ? inputs.invoiceNote.value.trim() : '';
-        previews.noteText.textContent = noteVal || 'Please complete your payment within 14 days, your cooperation is greatly appreciated.';
+        previews.noteText.textContent = noteVal || DEFAULT_INVOICE_NOTE;
 
         // Toolbar Status & Title (if present)
         if (previews.statusPill) {
@@ -1134,7 +1139,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             toggleBalance: inputs.toggleBalance.checked,
             total: total,
             balance: balanceVal,
-            note: inputs.invoiceNote ? inputs.invoiceNote.value.trim() : ''
+            note: (inputs.invoiceNote && inputs.invoiceNote.value.trim()) ? inputs.invoiceNote.value.trim() : DEFAULT_INVOICE_NOTE
         };
 
         const saved = await InvoiceDB.saveInvoice(invoiceData);
@@ -1204,7 +1209,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         inputs.toggleAdvance.checked = false;
         inputs.advanceAmount.value = 0;
         inputs.toggleBalance.checked = false;
-        if (inputs.invoiceNote) inputs.invoiceNote.value = '';
+        if (inputs.invoiceNote) inputs.invoiceNote.value = DEFAULT_INVOICE_NOTE;
 
         userModifiedItems = false;
         renderItemsInput();
@@ -1380,7 +1385,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         inputs.toggleAdvance.checked = !!inv.toggleAdvance;
         inputs.advanceAmount.value = inv.advanceAmount || 0;
         inputs.toggleBalance.checked = !!inv.toggleBalance;
-        if (inputs.invoiceNote) inputs.invoiceNote.value = inv.note || '';
+        if (inputs.invoiceNote) inputs.invoiceNote.value = (inv.note !== undefined && inv.note !== null && inv.note !== '') ? inv.note : DEFAULT_INVOICE_NOTE;
 
         // Show editing chip in preview toolbar
         if (editingBanner) editingBanner.classList.add('hidden');
@@ -1414,7 +1419,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         inputs.toggleAdvance.checked = !!inv.toggleAdvance;
         inputs.advanceAmount.value = inv.advanceAmount || 0;
         inputs.toggleBalance.checked = !!inv.toggleBalance;
-        if (inputs.invoiceNote) inputs.invoiceNote.value = inv.note || '';
+        if (inputs.invoiceNote) inputs.invoiceNote.value = (inv.note !== undefined && inv.note !== null && inv.note !== '') ? inv.note : DEFAULT_INVOICE_NOTE;
         currentInvoiceStatus = 'Draft';
 
         renderItemsInput();
