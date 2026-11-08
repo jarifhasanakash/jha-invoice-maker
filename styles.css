@@ -510,6 +510,8 @@ select {
 }
 
 .cs-dropdown.cs-drop-up {
+    top: auto;
+    bottom: calc(100% + 6px);
     transform: translateY(8px) scaleY(0.94);
     transform-origin: bottom center;
 }
@@ -2490,16 +2492,40 @@ input[type="checkbox"]:checked::before {
 
 /* Data Table Styles */
 .data-table-wrapper {
-    overflow-x: auto;
+    overflow: visible;
     background: var(--bg-app);
     border-radius: 8px;
     border: 1px solid var(--border-subtle);
+    min-height: 220px;
 }
 
 .data-table {
     width: 100%;
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     font-size: 13px;
+}
+
+.data-table tr {
+    position: relative;
+}
+
+.data-table tr:hover {
+    z-index: 2;
+}
+
+.data-table tr:has(.cs-wrapper.open),
+.data-table tr.cs-row-open {
+    z-index: 100 !important;
+}
+
+.data-table td.table-status-cell {
+    position: relative;
+    min-width: 140px;
+}
+
+.data-table td.table-status-cell .cs-wrapper.open {
+    z-index: 100;
 }
 
 .data-table th,

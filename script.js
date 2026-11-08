@@ -2050,49 +2050,39 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
-            function positionDropdown() {
-                const rect = trigger.getBoundingClientRect();
-                const dropdownWidth = Math.max(rect.width, isCompact ? 130 : 160);
-                const spaceBelow = window.innerHeight - rect.bottom;
-                const spaceAbove = rect.top;
-
-                // Determine whether to open upward or downward
-                const openUp = spaceBelow < 190 && spaceAbove > spaceBelow;
-                const left = Math.min(rect.left, window.innerWidth - dropdownWidth - 10);
-
-                dropdown.style.position = 'fixed';
-                dropdown.style.left = `${Math.max(10, left)}px`;
-                dropdown.style.width = `${dropdownWidth}px`;
-                dropdown.style.zIndex = '999999';
-
-                if (openUp) {
-                    dropdown.style.top = 'auto';
-                    dropdown.style.bottom = `${Math.max(8, window.innerHeight - rect.top + 4)}px`;
-                    dropdown.classList.add('cs-drop-up');
-                } else {
-                    dropdown.style.top = `${rect.bottom + 4}px`;
-                    dropdown.style.bottom = 'auto';
-                    dropdown.classList.remove('cs-drop-up');
-                }
-            }
-
             function openDropdown() {
                 // Close any other open custom selects
                 document.querySelectorAll('.cs-wrapper.open').forEach(w => {
                     if (w !== wrapper) {
                         w.classList.remove('open');
+                        w.closest('tr')?.classList.remove('cs-row-open');
                         w.querySelector('.cs-dropdown')?.classList.remove('cs-drop-up');
                         w.querySelector('.cs-trigger')?.setAttribute('aria-expanded', 'false');
                     }
                 });
                 rebuildOptions();
-                positionDropdown();
+
+                // Check if dropdown should pop upwards (when near viewport bottom)
+                const rect = trigger.getBoundingClientRect();
+                const spaceBelow = window.innerHeight - rect.bottom;
+                const spaceAbove = rect.top;
+                if (spaceBelow < 180 && spaceAbove > spaceBelow) {
+                    dropdown.classList.add('cs-drop-up');
+                } else {
+                    dropdown.classList.remove('cs-drop-up');
+                }
+
                 wrapper.classList.add('open');
+                wrapper.closest('tr')?.classList.add('cs-row-open');
                 trigger.setAttribute('aria-expanded', 'true');
             }
 
             function closeDropdown() {
                 wrapper.classList.remove('open');
+                wrapper.closest('tr')?.classList.remove('cs-row-open');
+                dropdown.classList.remove('cs-drop-up');
+                trigger.setAttribute('aria-expanded', 'false');
+            }
                 dropdown.classList.remove('cs-drop-up');
                 trigger.setAttribute('aria-expanded', 'false');
             }
@@ -2142,6 +2132,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const closeAllCustomSelects = () => {
             document.querySelectorAll('.cs-wrapper.open').forEach(w => {
                 w.classList.remove('open');
+                w.closest('tr')?.classList.remove('cs-row-open');
                 w.querySelector('.cs-dropdown')?.classList.remove('cs-drop-up');
                 w.querySelector('.cs-trigger')?.setAttribute('aria-expanded', 'false');
             });
