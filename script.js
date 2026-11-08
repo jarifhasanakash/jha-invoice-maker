@@ -1528,9 +1528,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (wrapper) wrapper.style.transform = originalTransform;
             autoFitZoom();
 
-            // Ready for next invoice
-            startNewInvoice(true);
-            showToast(`Invoice #${invoiceNo} ready for save!`, 'success');
+            showToast(`Invoice #${invoiceNo} sent to browser Save as PDF!`, 'success');
         }, 80);
     };
 
