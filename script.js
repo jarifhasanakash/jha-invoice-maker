@@ -1452,15 +1452,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast(`Status updated to ${newStatus}`, 'info');
     };
 
-    /* ---------------- 1-Page Seamless PDF Download Engine (Mobile & Desktop) ---------------- */
+    /* ---------------- Print Engine (True Vector 1-Page PDF) ---------------- */
 
-    const triggerDownloadPdf = async () => {
-        // Ensure invoice editor tab is active before downloading
+    const triggerPrint = async () => {
+        // Ensure invoice editor tab is active before printing
         if (activeTabKey !== 'tab-invoice') {
             switchTab('tab-invoice');
         }
 
-        // Validate client and items before proceeding with save or download
+        // Validate client and items before proceeding with save or print
         if (!validateInvoiceReady('downloading')) {
             return;
         }
@@ -1469,111 +1469,73 @@ document.addEventListener('DOMContentLoaded', async () => {
         const saved = await saveCurrentInvoice(false);
         if (!saved) return;
 
-        const originalPaper = document.getElementById('invoice-preview');
+        const element = document.getElementById('invoice-preview');
         const wrapper = document.querySelector('.preview-wrapper');
-        if (!originalPaper) return;
+        const originalTransform = wrapper ? wrapper.style.transform : '';
 
-        const invoiceNo = inputs.invoiceNumber.value || '0001';
+        // 2. Temporarily unscale wrapper to measure exact physical dimensions
+        if (wrapper) wrapper.style.transform = 'none';
 
-        // 2. Save original inline styles to restore after export
-        const origWrapperCss = wrapper ? wrapper.style.cssText : '';
-        const origPaperCss = originalPaper.style.cssText;
+        setTimeout(() => {
+            // Measure exact physical height (strictly exact, zero extra buffer to eliminate 2nd page)
+            const exactHeight = Math.ceil(element.getBoundingClientRect().height);
+            const width = 1080;
 
-        showToast('Generating 1-page PDF...', 'info');
+            const styleId = 'dynamic-print-settings';
+            let styleTag = document.getElementById(styleId);
+            if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = styleId;
+                document.head.appendChild(styleTag);
+            }
 
-        // 3. Fully unconstrain both wrapper and paper to full 1080px physical layout
-        if (wrapper) {
-            wrapper.style.cssText = 'transform: none !important; width: 1080px !important; min-width: 1080px !important; max-width: 1080px !important; height: auto !important; min-height: 0 !important; max-height: none !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border-radius: 0 !important;';
-        }
-        originalPaper.style.cssText = 'width: 1080px !important; min-width: 1080px !important; max-width: 1080px !important; height: auto !important; min-height: 0 !important; max-height: none !important; margin: 0 !important; transform: none !important; box-shadow: none !important;';
-
-        await new Promise(r => setTimeout(r, 150));
-
-        const paperHeight = Math.max(originalPaper.scrollHeight, originalPaper.offsetHeight, 1122);
-
-        // Direct 1-Click PDF Download: No print dialog, no page size options, single continuous page
-        if (typeof html2pdf !== 'undefined') {
-            const opt = {
-                margin: 0,
-                filename: `Invoice-${invoiceNo}.pdf`,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: {
-                    scale: 2, // High resolution Retina clarity
-                    useCORS: true,
-                    logging: false,
-                    width: 1080,
-                    windowWidth: 1080,
-                    scrollX: 0,
-                    scrollY: 0
-                },
-                jsPDF: {
-                    unit: 'px',
-                    format: [1080, paperHeight + 10], // Exact single continuous page
-                    orientation: 'portrait',
-                    hotfixes: ['px_scaling']
-                }
-            };
-
-            try {
-                const pdfBlob = await html2pdf().set(opt).from(originalPaper).outputPdf('blob');
-                const filename = `Invoice-${invoiceNo}.pdf`;
-
-                const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-
-                let savedDirectly = false;
-
-                // On iOS Safari: use Web Share API to immediately "Save to Files" or share
-                if (isIOS && navigator.canShare) {
-                    try {
-                        const file = new File([pdfBlob], filename, { type: 'application/pdf' });
-                        if (navigator.canShare({ files: [file] })) {
-                            await navigator.share({
-                                files: [file],
-                                title: filename
-                            });
-                            savedDirectly = true;
-                            showToast(`Invoice #${invoiceNo} ready!`, 'success');
-                        }
-                    } catch (shareErr) {
-                        if (shareErr.name === 'AbortError') {
-                            savedDirectly = true;
-                        }
+            styleTag.innerHTML = `
+                @media print {
+                    @page {
+                        size: ${width}px ${exactHeight}px;
+                        margin: 0 !important;
+                    }
+                    html,
+                    body {
+                        width: ${width}px !important;
+                        height: ${exactHeight}px !important;
+                        max-height: ${exactHeight}px !important;
+                        overflow: hidden !important;
+                        margin: 0 !important;
+                        padding: 0 !important;
+                    }
+                    .invoice-paper {
+                        width: ${width}px !important;
+                        height: ${exactHeight}px !important;
+                        max-height: ${exactHeight}px !important;
+                        margin: 0 !important;
+                        overflow: hidden !important;
+                        page-break-inside: avoid !important;
+                        break-inside: avoid !important;
+                        page-break-after: avoid !important;
+                        break-after: avoid !important;
                     }
                 }
+            `;
 
-                // Android tablet, phone, Desktop, or fallback: Direct binary file download (no print dialog, no letter/A4 options)
-                if (!savedDirectly) {
-                    const octetBlob = new Blob([pdfBlob], { type: 'application/octet-stream' });
-                    const blobUrl = URL.createObjectURL(octetBlob);
-                    const link = document.createElement('a');
-                    link.href = blobUrl;
-                    link.download = filename;
-                    link.rel = 'noopener';
-                    document.body.appendChild(link);
-                    link.click();
-                    setTimeout(() => {
-                        if (document.body.contains(link)) document.body.removeChild(link);
-                        URL.revokeObjectURL(blobUrl);
-                    }, 1500);
+            const originalTitle = document.title;
+            const invoiceNo = inputs.invoiceNumber.value;
+            document.title = `Invoice - ${invoiceNo}`;
 
-                    showToast(`Invoice #${invoiceNo} downloaded to Downloads!`, 'success');
-                }
+            window.print();
 
-                // Ready for next invoice
-                startNewInvoice(true);
-            } catch (err) {
-                console.error('PDF export error:', err);
-                showToast('Failed to export PDF, please retry.', 'error');
-            } finally {
-                if (wrapper) wrapper.style.cssText = origWrapperCss;
-                originalPaper.style.cssText = origPaperCss;
-                autoFitZoom();
-            }
-        }
+            document.title = originalTitle;
+            if (wrapper) wrapper.style.transform = originalTransform;
+            autoFitZoom();
+
+            // Ready for next invoice
+            startNewInvoice(true);
+            showToast(`Invoice #${invoiceNo} ready for save!`, 'success');
+        }, 80);
     };
 
-    printBtn.addEventListener('click', triggerDownloadPdf);
-    if (quickPrintBtn) quickPrintBtn.addEventListener('click', triggerDownloadPdf);
+    printBtn.addEventListener('click', triggerPrint);
+    if (quickPrintBtn) quickPrintBtn.addEventListener('click', triggerPrint);
 
     /* ---------------- Earnings & History ---------------- */
 
