@@ -30,7 +30,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         clientSelect: document.getElementById('client-select'),
         toggleAdvance: document.getElementById('toggleAdvance'),
         advanceAmount: document.getElementById('advanceAmount'),
-        toggleBalance: document.getElementById('toggleBalance')
+        toggleBalance: document.getElementById('toggleBalance'),
+        invoiceNote: document.getElementById('invoiceNote')
     };
 
     // Date handling will initialize date value formatted below
@@ -147,7 +148,6 @@ document.addEventListener('DOMContentLoaded', async () => {
         branchCode: document.getElementById('setting-branchCode'),
         swiftCode: document.getElementById('setting-swiftCode'),
         routingNo: document.getElementById('setting-routingNo'),
-        defaultNote: document.getElementById('setting-defaultNote'),
         currency: document.getElementById('setting-currency')
     };
 
@@ -444,9 +444,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         previews.advance.textContent = advanceVal.toFixed(2);
         previews.balance.textContent = balanceVal.toFixed(2);
 
-        // Note: pulled automatically from Settings
-        const settings = InvoiceDB.getSettings();
-        previews.noteText.textContent = settings.defaultNote || 'Please complete your payment within 14 days, your cooperation is greatly appreciated.';
+        // Note: pulled from New page Invoice Note input
+        const noteVal = inputs.invoiceNote ? inputs.invoiceNote.value.trim() : '';
+        previews.noteText.textContent = noteVal || 'Please complete your payment within 14 days, your cooperation is greatly appreciated.';
 
         // Toolbar Status & Title (if present)
         if (previews.statusPill) {
@@ -1134,7 +1134,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             toggleBalance: inputs.toggleBalance.checked,
             total: total,
             balance: balanceVal,
-            note: settings.defaultNote || ''
+            note: inputs.invoiceNote ? inputs.invoiceNote.value.trim() : ''
         };
 
         const saved = await InvoiceDB.saveInvoice(invoiceData);
@@ -1204,6 +1204,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         inputs.toggleAdvance.checked = false;
         inputs.advanceAmount.value = 0;
         inputs.toggleBalance.checked = false;
+        if (inputs.invoiceNote) inputs.invoiceNote.value = '';
 
         userModifiedItems = false;
         renderItemsInput();
@@ -1379,6 +1380,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         inputs.toggleAdvance.checked = !!inv.toggleAdvance;
         inputs.advanceAmount.value = inv.advanceAmount || 0;
         inputs.toggleBalance.checked = !!inv.toggleBalance;
+        if (inputs.invoiceNote) inputs.invoiceNote.value = inv.note || '';
 
         // Show editing chip in preview toolbar
         if (editingBanner) editingBanner.classList.add('hidden');
@@ -1412,6 +1414,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         inputs.toggleAdvance.checked = !!inv.toggleAdvance;
         inputs.advanceAmount.value = inv.advanceAmount || 0;
         inputs.toggleBalance.checked = !!inv.toggleBalance;
+        if (inputs.invoiceNote) inputs.invoiceNote.value = inv.note || '';
         currentInvoiceStatus = 'Draft';
 
         renderItemsInput();
@@ -1444,15 +1447,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         showToast(`Status updated to ${newStatus}`, 'info');
     };
 
-    /* ---------------- Print Engine (True Vector PDF) ---------------- */
+    /* ---------------- 1-Page Seamless PDF Download Engine (Mobile & Desktop) ---------------- */
 
-    const triggerPrint = async () => {
-        // Ensure invoice editor tab is active before printing
+    const triggerDownloadPdf = async () => {
+        // Ensure invoice editor tab is active before downloading
         if (activeTabKey !== 'tab-invoice') {
             switchTab('tab-invoice');
         }
 
-        // Validate client and items before proceeding with save or print
+        // Validate client and items before proceeding with save or download
         if (!validateInvoiceReady('downloading')) {
             return;
         }
@@ -1461,56 +1464,111 @@ document.addEventListener('DOMContentLoaded', async () => {
         const saved = await saveCurrentInvoice(false);
         if (!saved) return;
 
-        const element = document.getElementById('invoice-preview');
+        const originalPaper = document.getElementById('invoice-preview');
         const wrapper = document.querySelector('.preview-wrapper');
-        const originalTransform = wrapper.style.transform;
+        if (!originalPaper) return;
 
-        // 2. Temporarily remove UI scaling to measure true physical size
-        wrapper.style.transform = 'none';
+        const invoiceNo = inputs.invoiceNumber.value || '0001';
 
-        setTimeout(() => {
-            const height = element.offsetHeight + 55; // Calibrated 55px buffer
-            const width = 1080;
+        // 2. Save original inline styles to restore after export
+        const origWrapperCss = wrapper ? wrapper.style.cssText : '';
+        const origPaperCss = originalPaper.style.cssText;
 
-            const styleId = 'dynamic-print-settings';
-            let styleTag = document.getElementById(styleId);
-            if (!styleTag) {
-                styleTag = document.createElement('style');
-                styleTag.id = styleId;
-                document.head.appendChild(styleTag);
-            }
+        showToast('Generating 1-page PDF...', 'info');
 
-            styleTag.innerHTML = `
-                @media print {
-                    @page {
-                        size: ${width}px ${height}px;
-                        margin: 0;
-                    }
-                    .invoice-paper {
-                        width: ${width}px !important;
-                        height: ${height}px !important;
-                        margin: 0 !important;
+        // 3. Fully unconstrain both wrapper and paper to full 1080px physical layout
+        if (wrapper) {
+            wrapper.style.cssText = 'transform: none !important; width: 1080px !important; min-width: 1080px !important; max-width: 1080px !important; height: auto !important; min-height: 0 !important; max-height: none !important; overflow: visible !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border-radius: 0 !important;';
+        }
+        originalPaper.style.cssText = 'width: 1080px !important; min-width: 1080px !important; max-width: 1080px !important; height: auto !important; min-height: 0 !important; max-height: none !important; margin: 0 !important; transform: none !important; box-shadow: none !important;';
+
+        await new Promise(r => setTimeout(r, 150));
+
+        const paperHeight = Math.max(originalPaper.scrollHeight, originalPaper.offsetHeight, 1122);
+
+        // Direct 1-Click PDF Download: No print dialog, no page size options, single continuous page
+        if (typeof html2pdf !== 'undefined') {
+            const opt = {
+                margin: 0,
+                filename: `Invoice-${invoiceNo}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 2, // High resolution Retina clarity
+                    useCORS: true,
+                    logging: false,
+                    width: 1080,
+                    windowWidth: 1080,
+                    scrollX: 0,
+                    scrollY: 0
+                },
+                jsPDF: {
+                    unit: 'px',
+                    format: [1080, paperHeight + 10], // Exact single continuous page
+                    orientation: 'portrait',
+                    hotfixes: ['px_scaling']
+                }
+            };
+
+            try {
+                const pdfBlob = await html2pdf().set(opt).from(originalPaper).outputPdf('blob');
+                const filename = `Invoice-${invoiceNo}.pdf`;
+
+                const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+                let savedDirectly = false;
+
+                // On iOS Safari: use Web Share API to immediately "Save to Files" or share
+                if (isIOS && navigator.canShare) {
+                    try {
+                        const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+                        if (navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                files: [file],
+                                title: filename
+                            });
+                            savedDirectly = true;
+                            showToast(`Invoice #${invoiceNo} ready!`, 'success');
+                        }
+                    } catch (shareErr) {
+                        if (shareErr.name === 'AbortError') {
+                            savedDirectly = true;
+                        }
                     }
                 }
-            `;
 
-            const originalTitle = document.title;
-            const invoiceNo = inputs.invoiceNumber.value;
-            document.title = `Invoice - ${invoiceNo}`;
+                // Android tablet, phone, Desktop, or fallback: Direct binary file download (no print dialog, no letter/A4 options)
+                if (!savedDirectly) {
+                    const octetBlob = new Blob([pdfBlob], { type: 'application/octet-stream' });
+                    const blobUrl = URL.createObjectURL(octetBlob);
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = filename;
+                    link.rel = 'noopener';
+                    document.body.appendChild(link);
+                    link.click();
+                    setTimeout(() => {
+                        if (document.body.contains(link)) document.body.removeChild(link);
+                        URL.revokeObjectURL(blobUrl);
+                    }, 1500);
 
-            window.print();
+                    showToast(`Invoice #${invoiceNo} downloaded to Downloads!`, 'success');
+                }
 
-            document.title = originalTitle;
-            wrapper.style.transform = originalTransform;
-
-            // Immediately start a fresh new invoice instead of continuing to edit the downloaded one
-            startNewInvoice(true);
-            showToast(`Invoice #${invoiceNo} downloaded! Ready for new invoice.`, 'success');
-        }, 60);
+                // Ready for next invoice
+                startNewInvoice(true);
+            } catch (err) {
+                console.error('PDF export error:', err);
+                showToast('Failed to export PDF, please retry.', 'error');
+            } finally {
+                if (wrapper) wrapper.style.cssText = origWrapperCss;
+                originalPaper.style.cssText = origPaperCss;
+                autoFitZoom();
+            }
+        }
     };
 
-    printBtn.addEventListener('click', triggerPrint);
-    if (quickPrintBtn) quickPrintBtn.addEventListener('click', triggerPrint);
+    printBtn.addEventListener('click', triggerDownloadPdf);
+    if (quickPrintBtn) quickPrintBtn.addEventListener('click', triggerDownloadPdf);
 
     /* ---------------- Earnings & History ---------------- */
 
@@ -1674,7 +1732,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         settingInputs.swiftCode.value = bank.swiftCode || '';
         settingInputs.routingNo.value = bank.routingNo || '';
 
-        settingInputs.defaultNote.value = settings.defaultNote || '';
+        if (settingInputs.defaultNote) {
+            settingInputs.defaultNote.value = settings.defaultNote || '';
+        }
 
         // Load currency selector
         if (settingInputs.currency) {

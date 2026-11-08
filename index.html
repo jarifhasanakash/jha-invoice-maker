@@ -164,6 +164,14 @@
                     </div>
                 </section>
 
+                <!-- Invoice Note & Terms Section -->
+                <section class="control-group">
+                    <h3>Invoice Note & Terms</h3>
+                    <div class="input-group">
+                        <textarea id="invoiceNote" rows="3" placeholder="Please complete your payment within 14 days, your cooperation is greatly appreciated."></textarea>
+                    </div>
+                </section>
+
             </div>
         </aside>
 
@@ -574,29 +582,20 @@
                             </div>
                         </div>
 
-                        <!-- Company Logo & Invoice Note Side-by-Side (50% / 50%) -->
-                        <div class="settings-row-2col">
-                            <section class="settings-section">
-                                <h3><i class="ph ph-image"></i> Company Logo</h3>
-                                <div class="logo-upload-container">
-                                    <div id="logo-preview-box" class="logo-preview-box">
-                                        <span>No Logo</span>
-                                    </div>
-                                    <div class="upload-controls">
-                                        <input type="file" id="logoInput" accept="image/*" class="hidden">
-                                        <button onclick="document.getElementById('logoInput').click()" class="secondary-btn upload-logo-btn"><i class="ph ph-upload-simple"></i> Upload Logo</button>
-                                        <button id="remove-logo" class="secondary-btn remove-logo-btn"><i class="ph ph-trash"></i> Remove</button>
-                                    </div>
+                        <!-- Company Logo -->
+                        <section class="settings-section">
+                            <h3><i class="ph ph-image"></i> Company Logo</h3>
+                            <div class="logo-upload-container">
+                                <div id="logo-preview-box" class="logo-preview-box">
+                                    <span>No Logo</span>
                                 </div>
-                            </section>
-
-                            <section class="settings-section">
-                                <h3><i class="ph ph-note"></i> Invoice Note & Terms</h3>
-                                <div class="input-group setting-note-group">
-                                    <textarea id="setting-defaultNote" placeholder="Please complete your payment within 14 days, your cooperation is greatly appreciated."></textarea>
+                                <div class="upload-controls">
+                                    <input type="file" id="logoInput" accept="image/*" class="hidden">
+                                    <button onclick="document.getElementById('logoInput').click()" class="secondary-btn upload-logo-btn"><i class="ph ph-upload-simple"></i> Upload Logo</button>
+                                    <button id="remove-logo" class="secondary-btn remove-logo-btn"><i class="ph ph-trash"></i> Remove</button>
                                 </div>
-                            </section>
-                        </div>
+                            </div>
+                        </section>
 
                         <!-- Personal Profile -->
                         <section class="settings-section">
