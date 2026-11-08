@@ -1616,7 +1616,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td>${formatDate(inv.date)}</td>
                 <td style="color: #fff; font-weight: 500;">${clientName}</td>
                 <td style="color: var(--accent-color); font-weight: 600;">$${total.toFixed(2)}</td>
-                <td>
+                <td class="table-status-cell">
                     <select class="table-status-select" onchange="changeInvoiceStatus('${inv.id}', this.value)">
                         <option value="Paid" ${status === 'Paid' ? 'selected' : ''}>Paid</option>
                         <option value="Pending" ${status === 'Pending' ? 'selected' : ''}>Pending</option>
@@ -2050,21 +2050,50 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
 
+            function positionDropdown() {
+                const rect = trigger.getBoundingClientRect();
+                const dropdownWidth = Math.max(rect.width, isCompact ? 130 : 160);
+                const spaceBelow = window.innerHeight - rect.bottom;
+                const spaceAbove = rect.top;
+
+                // Determine whether to open upward or downward
+                const openUp = spaceBelow < 190 && spaceAbove > spaceBelow;
+                const left = Math.min(rect.left, window.innerWidth - dropdownWidth - 10);
+
+                dropdown.style.position = 'fixed';
+                dropdown.style.left = `${Math.max(10, left)}px`;
+                dropdown.style.width = `${dropdownWidth}px`;
+                dropdown.style.zIndex = '999999';
+
+                if (openUp) {
+                    dropdown.style.top = 'auto';
+                    dropdown.style.bottom = `${Math.max(8, window.innerHeight - rect.top + 4)}px`;
+                    dropdown.classList.add('cs-drop-up');
+                } else {
+                    dropdown.style.top = `${rect.bottom + 4}px`;
+                    dropdown.style.bottom = 'auto';
+                    dropdown.classList.remove('cs-drop-up');
+                }
+            }
+
             function openDropdown() {
                 // Close any other open custom selects
                 document.querySelectorAll('.cs-wrapper.open').forEach(w => {
                     if (w !== wrapper) {
                         w.classList.remove('open');
+                        w.querySelector('.cs-dropdown')?.classList.remove('cs-drop-up');
                         w.querySelector('.cs-trigger')?.setAttribute('aria-expanded', 'false');
                     }
                 });
                 rebuildOptions();
+                positionDropdown();
                 wrapper.classList.add('open');
                 trigger.setAttribute('aria-expanded', 'true');
             }
 
             function closeDropdown() {
                 wrapper.classList.remove('open');
+                dropdown.classList.remove('cs-drop-up');
                 trigger.setAttribute('aria-expanded', 'false');
             }
 
@@ -2109,13 +2138,18 @@ document.addEventListener('DOMContentLoaded', async () => {
             syncTriggerText();
         });
 
-        // Global close on outside click
-        document.addEventListener('click', () => {
+        // Global close on outside click or scroll
+        const closeAllCustomSelects = () => {
             document.querySelectorAll('.cs-wrapper.open').forEach(w => {
                 w.classList.remove('open');
+                w.querySelector('.cs-dropdown')?.classList.remove('cs-drop-up');
                 w.querySelector('.cs-trigger')?.setAttribute('aria-expanded', 'false');
             });
-        }, { capture: false });
+        };
+
+        document.addEventListener('click', closeAllCustomSelects, { capture: false });
+        window.addEventListener('scroll', closeAllCustomSelects, { capture: true, passive: true });
+        window.addEventListener('resize', closeAllCustomSelects, { passive: true });
     }
 
     /**

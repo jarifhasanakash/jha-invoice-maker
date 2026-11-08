@@ -509,6 +509,15 @@ select {
     pointer-events: auto;
 }
 
+.cs-dropdown.cs-drop-up {
+    transform: translateY(8px) scaleY(0.94);
+    transform-origin: bottom center;
+}
+
+.cs-wrapper.open .cs-dropdown.cs-drop-up {
+    transform: translateY(0) scaleY(1);
+}
+
 .cs-dropdown-inner {
     overflow-y: auto;
     max-height: 280px;
