@@ -3,7 +3,6 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="description" content="Professional, high-performance invoice generator with offline JSON database, live vector preview, and multi-currency support.">
     <meta name="theme-color" content="#121316">
     <title>JHA Invoice Maker</title>
@@ -13,19 +12,12 @@
         href="https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&family=Inter:wght@400;500;600;700&display=swap"
         rel="stylesheet">
     <link rel="icon" type="image/x-icon" href="jha-icon.png">
-    <link rel="apple-touch-icon" href="jha-icon.png">
-    <link rel="manifest" href="manifest.json">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Invoice Maker">
-    <meta name="application-name" content="JHA Invoice Maker">
     <!-- Phosphor Icons (Regular & Bold) -->
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
-    <link rel="stylesheet" href="styles.css?v=7.1">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/pdfmake.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.10/vfs_fonts.js"></script>
-    <script src="db.js?v=2.7"></script>
+    <link rel="stylesheet" href="styles.css?v=3.7">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="db.js"></script>
 </head>
 
 <body>
@@ -83,7 +75,7 @@
                     <button id="cancel-edit-btn" style="display: none;"></button>
                 </div>
 
-                <div id="sidebar-invoice-controls" class="controls">
+                <div class="controls">
                 <!-- Invoice Details Section -->
                 <section class="control-group">
                     <h3>Invoice Details</h3>
@@ -172,73 +164,8 @@
                     </div>
                 </section>
 
-                </div>
-
-                <!-- Settings Left Sidebar: 6-Digit Device Sync -->
-                <div id="sidebar-settings-panel" class="sidebar-settings-panel hidden">
-                    <div class="sidebar-settings-header">
-                        <div class="sidebar-settings-title-row">
-                            <i class="ph ph-arrows-left-right"></i>
-                            <h3>Device Sync</h3>
-                        </div>
-                        <p class="sidebar-settings-desc">Sync your invoices &amp; clients between your PC and phone using a private 6-digit code. Zero camera access, 100% encrypted.</p>
-                    </div>
-
-                    <!-- Generate Code Card (Send to other device) -->
-                    <div class="sidebar-code-card">
-                        <div class="sidebar-code-header">
-                            <span class="code-card-label"><i class="ph ph-arrow-up-right"></i> Send to Phone / Device</span>
-                            <div class="sync-timer-badge">
-                                <i class="ph ph-clock"></i>
-                                <span id="sidebar-sync-timer">05:00</span>
-                            </div>
-                        </div>
-
-                        <div class="sidebar-code-box">
-                            <div id="sidebar-code-digits" class="sync-digits-display">--- ---</div>
-                            <div class="sync-progress-track">
-                                <div id="sidebar-sync-progress" class="sync-progress-fill" style="width: 100%;"></div>
-                            </div>
-                        </div>
-
-                        <p id="sidebar-code-status" class="sync-status-hint">Click "New Code" to generate a 5-minute sync code.</p>
-
-                        <div class="sidebar-code-actions">
-                            <button id="sidebar-copy-code-btn" class="secondary-btn sync-btn-sm" title="Copy code to clipboard">
-                                <i class="ph ph-copy"></i> <span>Copy Code</span>
-                            </button>
-                            <button id="sidebar-gen-code-btn" class="primary-btn sync-btn-sm" title="Generate fresh 5-minute code">
-                                <i class="ph ph-arrows-clockwise"></i> <span>New Code</span>
-                            </button>
-                        </div>
-
-                        <div id="sidebar-sync-stats" class="sync-stats-pill">
-                            Invoices &amp; clients ready to sync
-                        </div>
-                    </div>
-
-                    <!-- Receive Code Card (Enter from other device) -->
-                    <div class="sidebar-receive-card">
-                        <span class="code-card-label"><i class="ph ph-arrow-down-left"></i> Receive from another Device</span>
-                        <p class="sync-receive-hint">Enter the 6-digit code displayed on your phone or other device:</p>
-                        <div class="sync-input-row">
-                            <input type="text" id="sidebar-input-code" placeholder="e.g. 582 914" maxlength="7" autocomplete="off" spellcheck="false">
-                            <button id="sidebar-submit-code-btn" class="primary-btn">
-                                <i class="ph ph-arrow-down-left"></i> <span>Sync</span>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="sidebar-sync-steps">
-                        <h4><i class="ph ph-info"></i> How it works:</h4>
-                        <ol>
-                            <li>Open JHA Invoice Maker on your phone.</li>
-                            <li>Go to <strong>Settings</strong> &gt; <strong>Device Sync</strong>.</li>
-                            <li>Type the 6-digit code shown above before the 5-minute timer expires!</li>
-                        </ol>
-                    </div>
-                </div>
-            </aside>
+            </div>
+        </aside>
 
         <!-- Main Preview Area -->
         <main class="preview-area">
@@ -297,9 +224,9 @@
                                             <div class="party from">
                                                 <h3>From</h3>
                                                 <div class="party-details">
-                                                    <div class="name" id="preview-from-name">Your Business / Name</div>
-                                                    <div class="sub" id="preview-from-location">City/State, Country</div>
-                                                    <div class="sub" id="preview-from-email">your.email@example.com</div>
+                                                    <div class="name" id="preview-from-name">Jarif Hasan</div>
+                                                    <div class="sub" id="preview-from-location">Dhaka, Bangladesh</div>
+                                                    <div class="sub" id="preview-from-email">jarif.hasan@example.com</div>
                                                 </div>
                                             </div>
                                             <div class="party to">
@@ -355,17 +282,17 @@
                                     <h3>Payment info</h3>
                                     <div class="payment-methods">
                                         <div class="col" id="preview-col-platform1">
-                                            <h4 id="preview-platform1-name">PayPal</h4>
+                                            <h4 id="preview-platform1-name">Payoneer</h4>
                                             <div class="row" id="preview-row-platform1-email"><span
                                                     class="lbl">Email</span><span class="sep">:</span><span class="val"
-                                                    id="preview-platform1-email">account@example.com</span>
+                                                    id="preview-platform1-email">jarif.hasan@example.com</span>
                                             </div>
                                         </div>
                                         <div class="col" id="preview-col-platform2">
                                             <h4 id="preview-platform2-name">Wise</h4>
                                             <div class="row" id="preview-row-platform2-email"><span
                                                     class="lbl">Email</span><span class="sep">:</span><span class="val"
-                                                    id="preview-platform2-email">account@example.com</span></div>
+                                                    id="preview-platform2-email">jarif.hasan@example.com</span></div>
                                         </div>
                                     </div>
                                     <div class="divider"></div>
@@ -376,33 +303,33 @@
                                             </div>
                                             <div class="row" id="preview-row-first-name"><span class="lbl">First
                                                     Name</span><span class="sep">:</span><span class="val"
-                                                    id="preview-first-name">First</span></div>
+                                                    id="preview-first-name">Jarif</span></div>
                                             <div class="row" id="preview-row-last-name"><span class="lbl">Last Name</span><span
-                                                    class="sep">:</span><span class="val" id="preview-last-name">Last</span>
+                                                    class="sep">:</span><span class="val" id="preview-last-name">Hasan</span>
                                             </div>
                                             <div class="row" id="preview-row-address"><span class="lbl">Address</span><span
-                                                    class="sep">:</span><span class="val" id="preview-address">City,
-                                                    Country</span></div>
+                                                    class="sep">:</span><span class="val" id="preview-address">Dhaka,
+                                                    Bangladesh</span></div>
                                             <div class="row" id="preview-row-account-number"><span class="lbl">A/C
                                                     No</span><span class="sep">:</span><span class="val"
-                                                    id="preview-account-number">0000000000</span></div>
+                                                    id="preview-account-number">1234567890</span></div>
                                         </div>
                                         <div class="bank-col-right">
                                             <div class="row" id="preview-row-bank-name"><span class="lbl">Bank Name</span><span
-                                                    class="sep">:</span><span class="val" id="preview-bank-name">Bank
-                                                    Name</span></div>
+                                                    class="sep">:</span><span class="val" id="preview-bank-name">Dhaka
+                                                    Bank</span></div>
                                             <div class="row" id="preview-row-branch-name"><span class="lbl">Branch
                                                     Name</span><span class="sep">:</span><span class="val"
-                                                    id="preview-branch-name">Branch Name</span></div>
+                                                    id="preview-branch-name">Banani Branch</span></div>
                                             <div class="row" id="preview-row-branch-code"><span class="lbl">Branch
                                                     Code</span><span class="sep">:</span><span class="val"
-                                                    id="preview-branch-code">000</span></div>
+                                                    id="preview-branch-code">012</span></div>
                                             <div class="row" id="preview-row-swift-code"><span class="lbl">SWIFT
                                                     Code</span><span class="sep">:</span><span class="val"
-                                                    id="preview-swift-code">SWIFTCODE</span></div>
+                                                    id="preview-swift-code">DHAKBDDHXXX</span></div>
                                             <div class="row" id="preview-row-routing-no"><span class="lbl">Routing
                                                     No</span><span class="sep">:</span><span class="val"
-                                                    id="preview-routing-no">00000000</span></div>
+                                                    id="preview-routing-no">085260123</span></div>
                                         </div>
                                     </div>
                                 </div>
@@ -412,10 +339,10 @@
                             <div class="invoice-thank-you">
                                 <h2>Thank you!</h2>
                                 <div class="signature">
-                                    <span class="name" id="preview-signature-name">Authorized Signature</span>
+                                    <span class="name" id="preview-signature-name">Jarif Hasan</span>
                                     <span id="preview-mobile-divider" class="signature-divider">|</span>
-                                    <span id="preview-mobile-container" class="contact">Mobile: <span id="preview-mobile">+00
-                                            0000-000000</span></span>
+                                    <span id="preview-mobile-container" class="contact">WhatsApp: <span id="preview-mobile">+880
+                                            1700-000000</span></span>
                                 </div>
                             </div>
                         </div>
@@ -598,8 +525,8 @@
                                     <input type="text" id="client-form-location" placeholder="New York, USA" required>
                                 </div>
                                 <div class="input-group">
-                                    <label>Mobile Number</label>
-                                    <input type="tel" id="client-form-phone" placeholder="+1 555-0199">
+                                    <label>Phone / WhatsApp</label>
+                                    <input type="text" id="client-form-phone" placeholder="+1 555-0199">
                                 </div>
                                 <div class="input-group">
                                     <label>Currency</label>
@@ -620,13 +547,13 @@
                                     </select>
                                 </div>
                                 <div class="input-group" style="grid-column: span 2;">
-                                    <label>Notes</label>
-                                    <textarea id="client-form-notes" rows="2" placeholder="e.g. Net 14 days, VAT exempt"></textarea>
+                                    <label>Notes / Default Terms</label>
+                                    <input type="text" id="client-form-notes" placeholder="e.g. Net 14 days, VAT exempt">
                                 </div>
                             </div>
                             <div class="form-actions">
                                 <button id="save-client-form-btn" class="primary-btn btn-auto"><i class="ph ph-floppy-disk"></i> Save Client</button>
-                                <button id="cancel-client-form-btn" class="secondary-btn btn-auto"><i class="ph ph-x"></i> Cancel</button>
+                                <button id="cancel-client-form-btn" class="tertiary-btn btn-auto"><i class="ph ph-x"></i> Cancel</button>
                             </div>
                         </div>
 
@@ -658,13 +585,13 @@
                                     <div class="upload-controls">
                                         <input type="file" id="logoInput" accept="image/*" class="hidden">
                                         <button onclick="document.getElementById('logoInput').click()" class="secondary-btn upload-logo-btn"><i class="ph ph-upload-simple"></i> Upload Logo</button>
-                                        <button id="remove-logo" class="secondary-btn remove-logo-btn" title="Remove Logo"><i class="ph ph-trash"></i> <span class="remove-logo-text">Remove</span></button>
+                                        <button id="remove-logo" class="secondary-btn remove-logo-btn"><i class="ph ph-trash"></i> Remove</button>
                                     </div>
                                 </div>
                             </section>
 
                             <section class="settings-section">
-                                <h3><i class="ph ph-note"></i> Invoice Note</h3>
+                                <h3><i class="ph ph-note"></i> Invoice Note & Terms</h3>
                                 <div class="input-group setting-note-group">
                                     <textarea id="setting-defaultNote" placeholder="Please complete your payment within 14 days, your cooperation is greatly appreciated."></textarea>
                                 </div>
@@ -673,35 +600,35 @@
 
                         <!-- Personal Profile -->
                         <section class="settings-section">
-                            <h3><i class="ph ph-user"></i> Profile Details</h3>
-                            <p class="settings-subtitle">Default issuer information displayed in the "From" section of the invoice.</p>
-                            <div class="settings-grid">
+                            <h3><i class="ph ph-user"></i> Profile & "From" Details</h3>
+                            <p style="font-size: 13px; color: #888; margin-bottom: 12px;">Default issuer information displayed in the "From" section of the invoice.</p>
+                            <div class="settings-grid" style="margin-bottom: 20px;">
                                 <div class="input-group">
                                     <label>First Name</label>
-                                    <input type="text" id="setting-firstName" placeholder="John" autocomplete="off">
+                                    <input type="text" id="setting-firstName" placeholder="Jarif">
                                 </div>
                                 <div class="input-group">
                                     <label>Last Name</label>
-                                    <input type="text" id="setting-lastName" placeholder="Doe" autocomplete="off">
+                                    <input type="text" id="setting-lastName" placeholder="Hasan">
                                 </div>
                                 <div class="input-group">
                                     <label>Email</label>
-                                    <input type="email" id="setting-email" placeholder="john.doe@example.com" autocomplete="off">
+                                    <input type="email" id="setting-email" placeholder="jarif.hasan@example.com">
                                 </div>
                                 <div class="input-group">
-                                    <label>Mobile Number</label>
-                                    <input type="tel" id="setting-mobile" placeholder="+1 (555) 234-5678" autocomplete="off">
+                                    <label>Mobile Number / WhatsApp</label>
+                                    <input type="text" id="setting-mobile" placeholder="+880 1700-000000">
                                 </div>
                                 <div class="input-group" style="grid-column: span 2;">
                                     <label>Address</label>
-                                    <input type="text" id="setting-address" placeholder="Dhaka, Bangladesh" autocomplete="off">
+                                    <input type="text" id="setting-address" placeholder="Dhaka, Bangladesh">
                                 </div>
                             </div>
                         </section>
 
                         <!-- Currency & Regional Settings -->
                         <section class="settings-section">
-                            <h3><i class="ph ph-currency-dollar"></i> Default Currency</h3>
+                            <h3><i class="ph ph-currency-dollar"></i> Currency & Regional</h3>
                             <div class="settings-grid">
                                 <div class="input-group" style="grid-column: span 2;">
                                     <label for="setting-currency">Default Currency</label>
@@ -726,130 +653,66 @@
 
                         <!-- Payment Platforms -->
                         <section class="settings-section">
-                            <h3><i class="ph ph-credit-card"></i> Payment Platforms</h3>
-                            <div class="settings-grid settings-grid-spaced">
+                            <div class="section-header-flex">
+                                <h3><i class="ph ph-credit-card"></i> Payment Platforms (Default)</h3>
+                            </div>
+                            <div class="settings-grid" style="margin-bottom: 10px;">
                                 <div class="input-group">
                                     <label>Platform #1 Name</label>
-                                    <input type="text" id="setting-platform1Name" placeholder="PayPal" autocomplete="off">
+                                    <input type="text" id="setting-platform1Name" placeholder="Payoneer">
                                 </div>
                                 <div class="input-group">
                                     <label>Platform #1 Email / ID</label>
-                                    <input type="text" id="setting-platform1Email" placeholder="john.doe@example.com" autocomplete="off">
+                                    <input type="text" id="setting-platform1Email" placeholder="jarif.hasan@example.com">
                                 </div>
                             </div>
                             <div class="settings-grid">
                                 <div class="input-group">
                                     <label>Platform #2 Name</label>
-                                    <input type="text" id="setting-platform2Name" placeholder="Wise" autocomplete="off">
+                                    <input type="text" id="setting-platform2Name" placeholder="Wise">
                                 </div>
                                 <div class="input-group">
                                     <label>Platform #2 Email / ID</label>
-                                    <input type="text" id="setting-platform2Email" placeholder="john.doe@example.com" autocomplete="off">
+                                    <input type="text" id="setting-platform2Email" placeholder="jarif.hasan@example.com">
                                 </div>
                             </div>
                         </section>
 
                         <!-- Bank Details -->
                         <section class="settings-section">
-                            <h3><i class="ph ph-bank"></i> Bank Details</h3>
+                            <h3><i class="ph ph-bank"></i> Bank Details (Default)</h3>
                             <div class="settings-grid">
                                 <div class="input-group">
                                     <label>Bank Name</label>
-                                    <input type="text" id="setting-bankName" placeholder="Matir Bank" autocomplete="off">
+                                    <input type="text" id="setting-bankName" placeholder="Dhaka Bank">
                                 </div>
                                 <div class="input-group">
                                     <label>A/C No</label>
-                                    <input type="text" id="setting-accountNumber" placeholder="9876543210" autocomplete="off">
+                                    <input type="text" id="setting-accountNumber" placeholder="1234567890">
                                 </div>
                                 <div class="input-group">
                                     <label>Branch Name</label>
-                                    <input type="text" id="setting-branchName" placeholder="Uttara Branch" autocomplete="off">
+                                    <input type="text" id="setting-branchName" placeholder="Banani Branch">
                                 </div>
                                 <div class="input-group">
                                     <label>Branch Code</label>
-                                    <input type="text" id="setting-branchCode" placeholder="102" autocomplete="off">
+                                    <input type="text" id="setting-branchCode" placeholder="012">
                                 </div>
                                 <div class="input-group">
                                     <label>SWIFT Code</label>
-                                    <input type="text" id="setting-swiftCode" placeholder="CHASUS33XXX" autocomplete="off">
+                                    <input type="text" id="setting-swiftCode" placeholder="DHAKBDDHXXX">
                                 </div>
                                 <div class="input-group">
                                     <label>Routing No</label>
-                                    <input type="text" id="setting-routingNo" placeholder="021000021" autocomplete="off">
-                                </div>
-                            </div>
-                            <div class="settings-actions-bar" style="margin-top: 18px; display: flex; justify-content: flex-end;">
-                                <button id="save-settings-btn" type="button" class="primary-btn" style="padding: 10px 22px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px;">
-                                    <i class="ph ph-check-circle" style="font-size: 1.1rem;"></i>
-                                    <span>Save Profile &amp; Bank Details</span>
-                                </button>
-                            </div>
-                        </section>
-
-
-                        <!-- Multi-Device Sync (6-Digit End-to-End Encrypted Code) -->
-                        <section class="settings-section code-sync-section">
-                            <h3><i class="ph ph-arrows-left-right"></i> Multi-Device Sync</h3>
-                            <div class="sync-card">
-                                <div class="sync-card-header">
-                                    <div class="sync-status-main">
-                                        <span class="sync-status-indicator dot-synced"></span>
-                                        <div class="sync-status-text-block">
-                                            <h4>Private 6-Digit Device Sync</h4>
-                                            <p>Sync invoices and clients directly between your PC and phone. Zero camera access, zero accounts, and end-to-end encrypted with a 5-minute timer.</p>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div class="settings-sync-dual-grid">
-                                    <!-- Panel A: Receive from Device -->
-                                    <div class="settings-sync-col">
-                                        <div class="settings-sync-box">
-                                            <span class="code-card-label"><i class="ph ph-arrow-down-left"></i> Enter 6-Digit Sync Code</span>
-                                            <p class="sync-receive-hint">Type the 6-digit code shown on your other device to pull all records:</p>
-                                            <div class="sync-input-row">
-                                                <input type="text" id="settings-input-code" placeholder="e.g. 582 914" maxlength="7" autocomplete="off" spellcheck="false">
-                                                <button id="settings-submit-code-btn" class="primary-btn">
-                                                    <i class="ph ph-arrow-down-left"></i> <span>Connect &amp; Sync</span>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <!-- Panel B: Send to Device -->
-                                    <div class="settings-sync-col">
-                                        <div class="settings-sync-box">
-                                            <div class="sidebar-code-header">
-                                                <span class="code-card-label"><i class="ph ph-arrow-up-right"></i> Generate Sync Code</span>
-                                                <div class="sync-timer-badge">
-                                                    <i class="ph ph-clock"></i>
-                                                    <span id="settings-sync-timer">05:00</span>
-                                                </div>
-                                            </div>
-                                            <div class="sidebar-code-box">
-                                                <div id="settings-code-digits" class="sync-digits-display">--- ---</div>
-                                                <div class="sync-progress-track">
-                                                    <div id="settings-sync-progress" class="sync-progress-fill" style="width: 100%;"></div>
-                                                </div>
-                                            </div>
-                                            <div class="sidebar-code-actions">
-                                                <button id="settings-copy-code-btn" class="secondary-btn sync-btn-sm">
-                                                    <i class="ph ph-copy"></i> <span>Copy Code</span>
-                                                </button>
-                                                <button id="settings-gen-code-btn" class="primary-btn sync-btn-sm">
-                                                    <i class="ph ph-arrows-clockwise"></i> <span>New Code</span>
-                                                </button>
-                                            </div>
-                                            <p id="settings-code-status" class="sync-status-hint">Click "New Code" to generate a 5-minute sync code.</p>
-                                        </div>
-                                    </div>
+                                    <input type="text" id="setting-routingNo" placeholder="085260123">
                                 </div>
                             </div>
                         </section>
+
 
                         <!-- JSON Database Hub (Positioned before Danger Zone) -->
                         <section class="settings-section db-hub-section">
-                            <h3><i class="ph ph-database"></i> JSON Database</h3>
+                            <h3><i class="ph ph-database"></i> JSON Database Engine</h3>
                             <div class="db-hub-card">
                                 <div class="db-hub-header">
                                     <p style="font-size: 13px; color: #888; margin: 0;">Browser-native storage (IndexedDB + Mirror). Back up or move across devices anytime.</p>
@@ -870,11 +733,11 @@
                             </div>
                         </section>
 
-                        <!-- Danger Zone / Delete All Single Row -->
+                        <!-- Danger Zone Single Row -->
                         <section class="settings-section danger-zone-row">
                             <div class="danger-zone-text">
-                                <h3><i class="ph ph-warning"></i> Delete All</h3>
-                                <p class="settings-subtitle">Resetting will clear all your saved settings, clients, invoices and database records.</p>
+                                <h3><i class="ph ph-warning"></i> Danger Zone</h3>
+                                <p>Resetting will clear all your saved settings, clients, invoices and database records.</p>
                             </div>
                             <button id="reset-data-btn" class="secondary-btn remove-logo-btn btn-auto"><i class="ph ph-warning-circle"></i> Delete all data</button>
                         </section>
@@ -888,17 +751,7 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="sync-code.js?v=1.8"></script>
-    <script src="script.js?v=5.1"></script>
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js').catch((err) => {
-                    console.log('[PWA] Service worker registration note:', err);
-                });
-            });
-        }
-    </script>
+    <script src="script.js?v=2.7"></script>
 </body>
 
 </html>

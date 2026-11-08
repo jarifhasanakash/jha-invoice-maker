@@ -15,30 +15,29 @@ const InvoiceDB = (() => {
     const DEFAULT_SCHEMA = {
         version: '2.0',
         lastUpdated: new Date().toISOString(),
-        isDemoData: true,
         profile: {
-            firstName: 'John',
-            lastName: 'Doe',
-            email: 'john.doe@example.com',
-            mobile: '+1 (555) 234-5678',
+            firstName: 'Jarif',
+            lastName: 'Hasan',
+            email: 'jarif.hasan@example.com',
+            mobile: '+880 1700-000000',
             address: 'Dhaka, Bangladesh',
             companyLogo: null,
             platforms: [
-                { id: 'platform1', name: 'PayPal', email: 'john.doe@example.com' },
-                { id: 'platform2', name: 'Wise', email: 'john.doe@example.com' }
+                { id: 'platform1', name: 'Payoneer', email: 'jarif.hasan@example.com' },
+                { id: 'platform2', name: 'Wise', email: 'jarif.hasan@example.com' }
             ],
             bank: {
-                bankName: 'Matir Bank',
-                accountNumber: '9876543210',
-                branchName: 'Uttara Branch',
-                branchCode: '102',
-                swiftCode: 'CHASUS33XXX',
-                routingNo: '021000021'
+                bankName: 'Dhaka Bank',
+                accountNumber: '1234567890',
+                branchName: 'Banani Branch',
+                branchCode: '012',
+                swiftCode: 'DHAKBDDHXXX',
+                routingNo: '085260123'
             }
         },
         clients: [
             {
-                id: 'client_sample_1',
+                id: 'client_1',
                 name: 'Acme Corporation',
                 location: 'San Francisco, CA, USA',
                 email: 'billing@acme.example.com',
@@ -111,7 +110,7 @@ const InvoiceDB = (() => {
                 schema.profile.address = parsedBank.address || schema.profile.address;
 
                 schema.profile.platforms = [
-                    { id: 'platform1', name: (parsedBank.platform1Name === 'Payoneer' ? 'PayPal' : (parsedBank.platform1Name || 'PayPal')), email: parsedBank.platform1Email || schema.profile.email },
+                    { id: 'platform1', name: parsedBank.platform1Name || 'Payoneer', email: parsedBank.platform1Email || schema.profile.email },
                     { id: 'platform2', name: parsedBank.platform2Name || 'Wise', email: parsedBank.platform2Email || schema.profile.email }
                 ];
 
@@ -263,7 +262,7 @@ const InvoiceDB = (() => {
                             date: inv.date || new Date().toISOString().split('T')[0],
                             dueDate: inv.dueDate || inv.date || new Date().toISOString().split('T')[0],
                             status: inv.status || 'Pending',
-                            from: inv.from || { name: '', location: '', email: '' },
+                            from: inv.from || { name: 'Jarif Hasan', location: 'Dhaka, Bangladesh', email: 'jarif.hasan@example.com' },
                             client: inv.client || inv.to || { name: 'Client Name', location: '', email: '' },
                             items: items,
                             toggleAdvance: !!inv.toggleAdvance,
@@ -730,79 +729,20 @@ const InvoiceDB = (() => {
         },
 
         /**
-         * Permanently delete all database records (profile, bank, clients, invoices, settings)
-         */
-        async deleteAllData() {
-            try {
-                localStorage.clear();
-                sessionStorage.clear();
-            } catch (e) {
-                console.warn('[InvoiceDB] LocalStorage clear note:', e);
-            }
-
-            const db = await openDB();
-            if (db) {
-                try {
-                    await new Promise((resolve) => {
-                        const tx = db.transaction([STORE_NAME], 'readwrite');
-                        const store = tx.objectStore(STORE_NAME);
-                        const req = store.clear();
-                        req.onsuccess = () => resolve();
-                        req.onerror = () => resolve();
-                    });
-                } catch (err) {
-                    console.warn('[InvoiceDB] IndexedDB clear note:', err);
-                }
-            }
-
-            const emptyData = {
-                version: CURRENT_SCHEMA_VERSION,
-                schemaVersion: CURRENT_SCHEMA_VERSION,
-                dataVersion: 1,
-                lastUpdated: new Date().toISOString(),
-                isDemoData: false,
-                profile: {
-                    firstName: '',
-                    lastName: '',
-                    email: '',
-                    mobile: '',
-                    address: '',
-                    companyLogo: null,
-                    platforms: [
-                        { id: 'platform1', name: 'PayPal', email: '' },
-                        { id: 'platform2', name: 'Wise', email: '' }
-                    ],
-                    bank: {
-                        bankName: '',
-                        accountNumber: '',
-                        branchName: '',
-                        branchCode: '',
-                        swiftCode: '',
-                        routingNo: ''
-                    }
-                },
-                clients: [],
-                invoices: [],
-                settings: {
-                    lastInvoiceNumber: '0001',
-                    defaultDueDays: 14,
-                    currencySymbol: '$',
-                    currency: 'USD',
-                    defaultNote: '',
-                    autoBackupReminder: true
-                }
-            };
-
-            cachedData = emptyData;
-            await this.save(emptyData);
-            return emptyData;
-        },
-
-        /**
-         * Reset database
+         * Reset database to default
          */
         async resetDatabase() {
-            return this.deleteAllData();
+            const fresh = JSON.parse(JSON.stringify(DEFAULT_SCHEMA));
+            await this.save(fresh);
+            // Clear legacy keys too
+            try {
+                localStorage.removeItem('companyLogo');
+                localStorage.removeItem('bankDetails');
+                localStorage.removeItem('clientList');
+                localStorage.removeItem('invoiceHistory');
+                localStorage.removeItem('lastInvoiceNumber');
+            } catch (e) { }
+            return fresh;
         }
     };
 })();

@@ -62,7 +62,6 @@ document.addEventListener('DOMContentLoaded', async () => {
     };
 
     const previewWrapper = document.querySelector('.preview-wrapper');
-    const invoicePreview = document.getElementById('invoice-preview');
     const itemsContainer = document.getElementById('items-container');
     const itemsCountBadge = document.getElementById('items-count-badge');
     const addItemBtn = document.getElementById('add-item-btn');
@@ -264,257 +263,32 @@ document.addEventListener('DOMContentLoaded', async () => {
         }, 3200);
     };
 
-    window.showToast = showToast;
-
     /* ---------------- Zoom & Scale Controls ---------------- */
-
-    /* ---------------- Zoom & Scale Controls ---------------- */
-
-    let isMobileZoomUserOverridden = false;
-    let mobileZoomLevel = 1.0; // 1.0 = 100% (fitted to mobile screen). Minimum is always 1.0!
-    let mobilePanX = 0;
-    let mobilePanY = 0;
-
-    const getBaseMobileFitScale = () => {
-        const screenW = window.innerWidth;
-        const targetW = Math.min(screenW - 20, 500);
-        return targetW / 1080;
-    };
-
-    const applyMobilePreviewZoom = () => {
-        if (!previewWrapper || !invoicePreview) return;
-        if (window.innerWidth > 768) return;
-
-        const baseFit = getBaseMobileFitScale();
-        // Clamped minimum is 100% (1.0), maximum is 250% (2.5)
-        mobileZoomLevel = Math.max(1.0, Math.min(2.5, mobileZoomLevel));
-        const effectiveScale = baseFit * mobileZoomLevel;
-
-        const baseWidth = Math.round(1080 * baseFit);
-        const paperHeight = invoicePreview.offsetHeight || 1400;
-        const baseHeight = Math.round(paperHeight * baseFit);
-
-        previewWrapper.style.transform = 'none';
-        previewWrapper.style.width = `${baseWidth}px`;
-        previewWrapper.style.maxWidth = 'calc(100vw - 20px)';
-        previewWrapper.style.height = `${baseHeight}px`;
-        previewWrapper.style.minHeight = `${baseHeight}px`;
-        previewWrapper.style.maxHeight = `${baseHeight}px`;
-        previewWrapper.style.margin = '0 auto 20px';
-        previewWrapper.style.overflow = 'hidden';
-        previewWrapper.style.position = 'relative';
-
-        // Clamp pan so invoice cannot be panned beyond view bounds
-        const maxPanX = Math.round(baseWidth * (mobileZoomLevel - 1.0));
-        const maxPanY = Math.round(baseHeight * (mobileZoomLevel - 1.0));
-
-        if (mobileZoomLevel <= 1.002) {
-            mobilePanX = 0;
-            mobilePanY = 0;
-        } else {
-            mobilePanX = Math.min(0, Math.max(-maxPanX, mobilePanX));
-            mobilePanY = Math.min(0, Math.max(-maxPanY, mobilePanY));
-        }
-
-        invoicePreview.style.transformOrigin = 'top left';
-        invoicePreview.style.transform = `translate3d(${mobilePanX}px, ${mobilePanY}px, 0) scale(${effectiveScale})`;
-
-        if (zoomLevelEl) {
-            zoomLevelEl.textContent = `${Math.round(mobileZoomLevel * 100)}%`;
-        }
-    };
 
     const setZoom = (scale) => {
-        const isMobile = window.innerWidth <= 768;
-        if (isMobile) {
-            isMobileZoomUserOverridden = true;
-            mobileZoomLevel = Math.max(1.0, Math.min(2.5, scale));
-            applyMobilePreviewZoom();
-        } else {
-            isMobileZoomUserOverridden = false;
-            currentZoom = Math.min(Math.max(scale, 0.4), 1.8);
-            if (previewWrapper) {
-                previewWrapper.style.transform = `scale(${currentZoom})`;
-                previewWrapper.style.height = '';
-                previewWrapper.style.minHeight = '';
-                previewWrapper.style.maxHeight = '';
-                previewWrapper.style.width = '';
-                previewWrapper.style.maxWidth = '';
-                previewWrapper.style.margin = '';
-                previewWrapper.style.overflow = '';
-            }
-            if (invoicePreview) {
-                invoicePreview.style.transform = '';
-                invoicePreview.style.transformOrigin = '';
-            }
-            if (zoomLevelEl) zoomLevelEl.textContent = `${Math.round(currentZoom * 100)}%`;
-        }
+        currentZoom = Math.min(Math.max(scale, 0.4), 1.8);
+        previewWrapper.style.transform = `scale(${currentZoom})`;
+        if (zoomLevelEl) zoomLevelEl.textContent = `${Math.round(currentZoom * 100)}%`;
     };
 
     const autoFitZoom = () => {
-        const isMobile = window.innerWidth <= 768;
-        if (isMobile) {
-            isMobileZoomUserOverridden = false;
-            mobileZoomLevel = 1.0;
-            mobilePanX = 0;
-            mobilePanY = 0;
-            applyMobilePreviewZoom();
+        const previewArea = document.querySelector('.preview-area');
+        if (!previewArea) return;
+        const availableWidth = previewArea.clientWidth - 80;
+        const targetWidth = 1080;
+        if (availableWidth < targetWidth) {
+            const calculatedScale = Math.max(0.4, (availableWidth / targetWidth) * 0.98);
+            setZoom(calculatedScale);
         } else {
-            isMobileZoomUserOverridden = false;
-            if (invoicePreview) {
-                invoicePreview.style.transform = '';
-                invoicePreview.style.transformOrigin = '';
-            }
-            if (previewWrapper) {
-                previewWrapper.style.width = '';
-                previewWrapper.style.maxWidth = '';
-                previewWrapper.style.height = '';
-                previewWrapper.style.minHeight = '';
-                previewWrapper.style.maxHeight = '';
-                previewWrapper.style.margin = '';
-                previewWrapper.style.overflow = '';
-            }
-            const previewArea = document.querySelector('.preview-area');
-            if (!previewArea) return;
-            const availableWidth = previewArea.clientWidth - 80;
-            const targetWidth = 1080;
-            if (availableWidth < targetWidth) {
-                const calculatedScale = Math.max(0.4, (availableWidth / targetWidth) * 0.98);
-                setZoom(calculatedScale);
-            } else {
-                setZoom(1.0);
-            }
+            setZoom(1.0);
         }
     };
 
-    const updateMobilePreviewDimensions = () => {
-        if (window.innerWidth <= 768) {
-            applyMobilePreviewZoom();
-        }
-    };
-
-    if (zoomInBtn) zoomInBtn.addEventListener('click', () => setZoom((window.innerWidth <= 768 ? mobileZoomLevel : currentZoom) + 0.1));
-    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => setZoom((window.innerWidth <= 768 ? mobileZoomLevel : currentZoom) - 0.1));
+    if (zoomInBtn) zoomInBtn.addEventListener('click', () => setZoom(currentZoom + 0.1));
+    if (zoomOutBtn) zoomOutBtn.addEventListener('click', () => setZoom(currentZoom - 0.1));
     if (zoomResetBtn) zoomResetBtn.addEventListener('click', () => setZoom(1.0));
     if (zoomFitBtn) zoomFitBtn.addEventListener('click', autoFitZoom);
     window.addEventListener('resize', autoFitZoom);
-    window.addEventListener('orientationchange', () => setTimeout(autoFitZoom, 150));
-
-    // Two-finger pinch zoom centered on focal point & pan AND single-finger pan when zoomed in
-    let initialPinchDistance = 0;
-    let initialPinchZoom = 1.0;
-    let initialPanX = 0;
-    let initialPanY = 0;
-    let initialMidX = 0;
-    let initialMidY = 0;
-    let initialFocalX = 0;
-    let initialFocalY = 0;
-    let isPinching = false;
-    let singleTouchStartX = 0;
-    let singleTouchStartY = 0;
-    let isSinglePanning = false;
-
-    if (previewWrapper) {
-        const initPinch = (t1, t2) => {
-            isPinching = true;
-            isSinglePanning = false;
-            initialPinchDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-            initialPinchZoom = mobileZoomLevel;
-            initialPanX = mobilePanX;
-            initialPanY = mobilePanY;
-            initialMidX = (t1.clientX + t2.clientX) / 2;
-            initialMidY = (t1.clientY + t2.clientY) / 2;
-            const rect = previewWrapper.getBoundingClientRect();
-            initialFocalX = initialMidX - rect.left;
-            initialFocalY = initialMidY - rect.top;
-        };
-
-        previewWrapper.addEventListener('touchstart', (e) => {
-            if (window.innerWidth > 768) return;
-            if (e.touches.length === 2) {
-                initPinch(e.touches[0], e.touches[1]);
-            } else if (e.touches.length === 1 && mobileZoomLevel > 1.01) {
-                isSinglePanning = true;
-                isPinching = false;
-                singleTouchStartX = e.touches[0].clientX;
-                singleTouchStartY = e.touches[0].clientY;
-            }
-        }, { passive: true });
-
-        previewWrapper.addEventListener('touchmove', (e) => {
-            if (window.innerWidth > 768) return;
-            if (e.touches.length === 2) {
-                const t1 = e.touches[0];
-                const t2 = e.touches[1];
-                const currentDistance = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
-
-                if (!isPinching || initialPinchDistance <= 0) {
-                    initPinch(t1, t2);
-                    return;
-                }
-
-                if (e.cancelable) e.preventDefault(); // Prevent browser native viewport zoom
-
-                const factor = currentDistance / initialPinchDistance;
-                // Minimum zoom is strictly 100% (1.0), maximum is 250% (2.5)
-                const targetZoom = Math.max(1.0, Math.min(2.5, initialPinchZoom * factor));
-
-                const currentMidX = (t1.clientX + t2.clientX) / 2;
-                const currentMidY = (t1.clientY + t2.clientY) / 2;
-                const shiftX = currentMidX - initialMidX;
-                const shiftY = currentMidY - initialMidY;
-
-                // Direct focal point zoom: anchors precisely to the point under fingers
-                const zoomRatio = targetZoom / initialPinchZoom;
-                mobilePanX = (initialFocalX + shiftX) - (initialFocalX - initialPanX) * zoomRatio;
-                mobilePanY = (initialFocalY + shiftY) - (initialFocalY - initialPanY) * zoomRatio;
-                mobileZoomLevel = targetZoom;
-
-                isMobileZoomUserOverridden = true;
-                applyMobilePreviewZoom();
-            } else if (e.touches.length === 1 && isSinglePanning && mobileZoomLevel > 1.01) {
-                const curX = e.touches[0].clientX;
-                const curY = e.touches[0].clientY;
-                const deltaX = curX - singleTouchStartX;
-                const deltaY = curY - singleTouchStartY;
-
-                // Allow smooth 2D panning inside the zoomed invoice preview
-                if (Math.abs(deltaX) > Math.abs(deltaY) || Math.abs(deltaX) > 4) {
-                    if (e.cancelable) e.preventDefault();
-                }
-
-                mobilePanX += deltaX;
-                mobilePanY += deltaY;
-                singleTouchStartX = curX;
-                singleTouchStartY = curY;
-                applyMobilePreviewZoom();
-            }
-        }, { passive: false });
-
-        const endTouch = (e) => {
-            if (e.touches.length < 2) {
-                isPinching = false;
-                initialPinchDistance = 0;
-            }
-            if (e.touches.length === 1 && mobileZoomLevel > 1.01) {
-                isSinglePanning = true;
-                singleTouchStartX = e.touches[0].clientX;
-                singleTouchStartY = e.touches[0].clientY;
-            } else if (e.touches.length === 0) {
-                isSinglePanning = false;
-            }
-        };
-
-        previewWrapper.addEventListener('touchend', endTouch, { passive: true });
-        previewWrapper.addEventListener('touchcancel', endTouch, { passive: true });
-    }
-
-    // Prevent accidental outer-page pinch zoom on mobile devices
-    document.addEventListener('touchmove', (e) => {
-        if (e.touches.length > 1 && !e.target.closest('.preview-wrapper')) {
-            if (e.cancelable) e.preventDefault();
-        }
-    }, { passive: false });
 
     /* ---------------- Line Items Handlers ---------------- */
 
@@ -597,7 +371,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // "From" information automatically pulled from Settings / Profile
         const profile = InvoiceDB.getProfile();
-        const fromFullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Your Name';
+        const fromFullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Jarif Hasan';
         previews.fromName.textContent = fromFullName;
         previews.fromLocation.textContent = profile.address || '';
         previews.fromEmail.textContent = profile.email || '';
@@ -685,9 +459,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Platform & Bank Visibility
         updatePlatformAndBankVisibility();
-
-        // Update mobile wrapper height to match scaled preview
-        updateMobilePreviewDimensions();
     }
 
     function updatePlatformAndBankVisibility() {
@@ -748,12 +519,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // Signature and mobile divider logic
-        const mobileVal = previews.mobile ? previews.mobile.textContent.trim() : '';
+        const mobileVal = previews.mobile.textContent.trim();
         const fullName = previews.signatureName ? previews.signatureName.textContent.trim() : '';
-        if (previews.mobileContainer) {
-            if (mobileVal) previews.mobileContainer.classList.remove('hidden');
-            else previews.mobileContainer.classList.add('hidden');
-        }
         if (previews.mobileDivider) {
             if (mobileVal && fullName) previews.mobileDivider.classList.remove('hidden');
             else previews.mobileDivider.classList.add('hidden');
@@ -1213,7 +980,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <div class="client-card-info">
                     <h4>${client.name} ${currencyBadge}</h4>
                     <div class="client-card-meta">
-                        ${client.email ? `<span title="${client.email}"><i class="ph ph-envelope-simple"></i> <span class="client-card-email">${client.email}</span></span>` : ''}
+                        ${client.email ? `<span><i class="ph ph-envelope-simple"></i> ${client.email}</span>` : ''}
                         ${client.location ? `<span><i class="ph ph-map-pin"></i> ${client.location}</span>` : ''}
                         ${client.phone ? `<span><i class="ph ph-phone"></i> ${client.phone}</span>` : ''}
                     </div>
@@ -1342,7 +1109,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const invNo = inputs.invoiceNumber.value.trim() || '0001';
         const profile = InvoiceDB.getProfile();
         const settings = InvoiceDB.getSettings();
-        const fromFullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Your Name';
+        const fromFullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Jarif Hasan';
 
         const invoiceData = {
             id: currentEditingInvoiceId || `inv_${Date.now()}`,
@@ -1476,25 +1243,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // Sidebar panel switching: Invoice controls vs Settings 6-digit sync
+        // Blur sidebar and prevent edits when in non-invoice tabs
         const sidebarEl = document.querySelector('.sidebar');
-        const invoiceControls = document.getElementById('sidebar-invoice-controls');
-        const settingsPanel = document.getElementById('sidebar-settings-panel');
-
         if (sidebarEl) {
-            if (tabKey === 'tab-settings') {
-                // Do NOT blur sidebar on Settings tab! Show 6-digit sync panel
-                sidebarEl.classList.remove('sidebar-blurred');
-                if (invoiceControls) invoiceControls.classList.add('hidden');
-                if (settingsPanel) settingsPanel.classList.remove('hidden');
-            } else if (tabKey === 'tab-invoice') {
-                sidebarEl.classList.remove('sidebar-blurred');
-                if (invoiceControls) invoiceControls.classList.remove('hidden');
-                if (settingsPanel) settingsPanel.classList.add('hidden');
-            } else {
+            if (tabKey !== 'tab-invoice') {
                 sidebarEl.classList.add('sidebar-blurred');
-                if (invoiceControls) invoiceControls.classList.remove('hidden');
-                if (settingsPanel) settingsPanel.classList.add('hidden');
+            } else {
+                sidebarEl.classList.remove('sidebar-blurred');
             }
         }
 
@@ -1531,13 +1286,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function handleTabActivated(tabKey) {
-        // Discard any unsaved settings edits when navigating between tabs
-        loadProfileAndSettings();
-
         if (tabKey === 'tab-history') {
             updateEarningsDisplay();
         } else if (tabKey === 'tab-clients') {
             renderClientsModalList(clientSearchInput ? clientSearchInput.value : '');
+        } else if (tabKey === 'tab-settings') {
+            loadProfileAndSettings();
         } else if (tabKey === 'tab-invoice') {
             autoFitZoom();
         }
@@ -1692,119 +1446,13 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     /* ---------------- Print Engine (True Vector PDF) ---------------- */
 
-    /* ---------------- Direct PDF Download Engine (Desktop & Mobile) ---------------- */
-
-    const fallbackPrint = (invoiceNo, customPaperHeight, customWrapper, customPaper, origWrapperCss, origPaperCss) => {
-        const originalPaper = customPaper || document.getElementById('invoice-preview');
-        const wrapper = customWrapper || document.querySelector('.preview-wrapper');
-        const paperHeight = customPaperHeight || (originalPaper ? originalPaper.scrollHeight : 1122);
-        const height = paperHeight + 10;
-        const width = 1080;
-
-        const styleId = 'dynamic-print-settings';
-        let styleTag = document.getElementById(styleId);
-        if (!styleTag) {
-            styleTag = document.createElement('style');
-            styleTag.id = styleId;
-            document.head.appendChild(styleTag);
-        }
-
-        styleTag.innerHTML = `
-            @media print {
-                @page {
-                    size: ${width}px ${height}px;
-                    margin: 0 !important;
-                }
-                html, body {
-                    width: ${width}px !important;
-                    min-width: ${width}px !important;
-                    max-width: ${width}px !important;
-                    height: auto !important;
-                    margin: 0 auto !important;
-                    padding: 0 !important;
-                    overflow: visible !important;
-                    background: #ffffff !important;
-                    -webkit-print-color-adjust: exact !important;
-                    print-color-adjust: exact !important;
-                }
-                .app-container, .app-body, .tab-content-area, #view-invoice, .preview-area {
-                    display: block !important;
-                    width: ${width}px !important;
-                    min-width: ${width}px !important;
-                    max-width: ${width}px !important;
-                    height: auto !important;
-                    min-height: 0 !important;
-                    max-height: none !important;
-                    overflow: visible !important;
-                    margin: 0 auto !important;
-                    padding: 0 !important;
-                }
-                .preview-wrapper {
-                    display: block !important;
-                    width: ${width}px !important;
-                    min-width: ${width}px !important;
-                    max-width: ${width}px !important;
-                    height: auto !important;
-                    min-height: 0 !important;
-                    max-height: none !important;
-                    overflow: visible !important;
-                    margin: 0 auto !important;
-                    padding: 0 !important;
-                    border: none !important;
-                    box-shadow: none !important;
-                }
-                .invoice-paper {
-                    width: ${width}px !important;
-                    min-width: ${width}px !important;
-                    max-width: ${width}px !important;
-                    height: auto !important;
-                    min-height: ${paperHeight}px !important;
-                    margin: 0 auto !important;
-                    padding: 0 !important;
-                    transform: none !important;
-                    page-break-inside: avoid !important;
-                    break-inside: avoid !important;
-                }
-            }
-        `;
-
-        const originalTitle = document.title;
-        document.title = `Invoice - ${invoiceNo}`;
-
-        let isCleanedUp = false;
-        const cleanupPrint = () => {
-            if (isCleanedUp) return;
-            isCleanedUp = true;
-            window.removeEventListener('afterprint', cleanupPrint);
-            document.title = originalTitle;
-            document.body.classList.remove('is-printing');
-            if (wrapper) wrapper.style.cssText = origWrapperCss;
-            originalPaper.style.cssText = origPaperCss;
-
-            if (window.innerWidth <= 768 && typeof applyMobilePreviewZoom === 'function') {
-                applyMobilePreviewZoom();
-            }
-
-            showToast(`Invoice #${invoiceNo} PDF downloaded!`, 'success');
-        };
-
-        window.addEventListener('afterprint', cleanupPrint, { once: true });
-        setTimeout(cleanupPrint, 4000);
-
-        window.print();
-    };
-
-    const jhaLogoSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 400" width="70" height="70">
-        <path fill="#ea4e25" d="M38.5,294.7l-12.8,3.2C8.8,268,0,234.3,0,200,0,115.3,52.9,42.8,127.4,13.6v29.5c-59.2,27.5-100.3,87.5-100.3,156.9,0,32.2,8.9,63.7,25.9,91l-14.6,3.7ZM200,0c-7.5,0-15,.4-22.4,1.2v27.3c7.4-1,14.9-1.5,22.4-1.5,95.3,0,172.9,77.6,172.9,172.9,0,6.3-.3,12.6-1,18.8l-236.4,59.6v35.2l228.1-57.5s0,0,0,0c-23.4,67.8-87.8,116.6-163.5,116.6-40.1,0-78.9-13.9-109.8-39.4l-31.5,7.9c36.2,36.2,86.2,58.6,141.3,58.6,93.5,0,172.3-64.6,194-151.5,3-12,4.9-24.3,5.6-36.6.2-3.9.4-7.9.4-11.9C400,89.7,310.3,0,200,0ZM169.6,197c0-2.2,1-4.3,2.6-5.9,1.6-1.6,3.7-2.4,6-2.4s4.4.9,6,2.4c1.6,1.6,2.5,3.7,2.6,5.9v50.9l34.2-8.6v-42.3c0-10.8-4.2-19.9-12.6-27.3-8.4-7.4-18.4-11.1-30.1-11.1-2.9,0-5.7-.1-8.5-.4V2.3c-11.6,1.8-23,4.6-34.1,8.4v250.1l34.2-8.6v-55.2ZM295.8,217.5v-7.2c-5.5,4.1-11.8,7.1-18.4,8.9-24.1,6.4-43.6-7.5-43.6-31.1s19.5-47.9,43.6-54.4c6-1.7,12.3-2,18.4-.9v-3.8l34.1-9.1v88.4l-34.2,9.2ZM286.1,174.4c0-1.7-.5-3.4-1.4-4.9-.9-1.5-2.3-2.6-3.9-3.3-1.6-.7-3.4-.9-5.1-.6-1.7.3-3.3,1.1-4.5,2.4-1.2,1.2-2.1,2.8-2.4,4.5-.4,1.7-.2,3.5.5,5.1.7,1.6,1.8,3,3.2,4,1.4,1,3.1,1.5,4.9,1.5,1.1,0,2.3-.2,3.3-.6,1.1-.4,2-1.1,2.8-1.9.8-.8,1.5-1.7,1.9-2.8.4-1,.7-2.2.7-3.3ZM118.3,141.4v-16.6l-34.1,9v16.6l34.1-9ZM84.2,326.7l34.1-8.6v-160l-34.1,8.5v124.8l-26.5,6.7-27.8,7c6.5,10.5,14,20.4,22.4,29.6l5-1.3,25.5-6.4,1.4-.3Z"/>
-    </svg>`;
-
-    const triggerDownloadPdf = async () => {
-        // Ensure invoice editor tab is active before downloading
+    const triggerPrint = async () => {
+        // Ensure invoice editor tab is active before printing
         if (activeTabKey !== 'tab-invoice') {
             switchTab('tab-invoice');
         }
 
-        // Validate client and items before proceeding with save or download
+        // Validate client and items before proceeding with save or print
         if (!validateInvoiceReady('downloading')) {
             return;
         }
@@ -1813,388 +1461,56 @@ document.addEventListener('DOMContentLoaded', async () => {
         const saved = await saveCurrentInvoice(false);
         if (!saved) return;
 
-        const invoiceNo = inputs.invoiceNumber.value.trim() || '0001';
-        showToast('Generating genuine vector PDF...', 'info');
+        const element = document.getElementById('invoice-preview');
+        const wrapper = document.querySelector('.preview-wrapper');
+        const originalTransform = wrapper.style.transform;
 
-        // Check if pdfMake is loaded
-        if (typeof pdfMake === 'undefined' || typeof pdfMake.createPdf !== 'function') {
-            console.warn('pdfMake not ready, falling back to browser print');
-            fallbackPrint(invoiceNo);
-            return;
-        }
+        // 2. Temporarily remove UI scaling to measure true physical size
+        wrapper.style.transform = 'none';
 
-        try {
-            const profile = InvoiceDB.getProfile() || {};
-            const settings = InvoiceDB.getSettings() || {};
-            const fromFullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Your Name';
-            const toName = currentClient.name || 'Client Name';
-            const currencySymbol = getCurrencySymbol();
+        setTimeout(() => {
+            const height = element.offsetHeight + 55; // Calibrated 55px buffer
+            const width = 1080;
 
-            // Logo definition: vector SVG default or uploaded image
-            let logoElement;
-            if (profile.companyLogo && typeof profile.companyLogo === 'string' && profile.companyLogo.startsWith('data:image')) {
-                logoElement = {
-                    image: profile.companyLogo,
-                    width: 72,
-                    height: 72,
-                    fit: [72, 72]
-                };
-            } else {
-                logoElement = {
-                    svg: jhaLogoSvg,
-                    width: 72,
-                    height: 72
-                };
+            const styleId = 'dynamic-print-settings';
+            let styleTag = document.getElementById(styleId);
+            if (!styleTag) {
+                styleTag = document.createElement('style');
+                styleTag.id = styleId;
+                document.head.appendChild(styleTag);
             }
 
-            // Parties: From
-            const fromStack = [
-                { text: 'From', fontSize: 13, bold: true, color: '#0f172a', margin: [0, 0, 0, 6] },
-                { text: fromFullName, bold: true, fontSize: 11, color: '#1e293b' }
-            ];
-            if (profile.address) fromStack.push({ text: profile.address, color: '#64748b' });
-            if (profile.email) fromStack.push({ text: profile.email, color: '#64748b' });
-            if (profile.mobile) fromStack.push({ text: profile.mobile, color: '#64748b' });
-
-            // Parties: To
-            const toStack = [
-                { text: 'To', fontSize: 13, bold: true, color: '#0f172a', margin: [0, 0, 0, 6] },
-                { text: toName, bold: true, fontSize: 11, color: '#1e293b' }
-            ];
-            if (currentClient.location) toStack.push({ text: currentClient.location, color: '#64748b' });
-            if (currentClient.email) toStack.push({ text: currentClient.email, color: '#64748b' });
-            if (currentClient.phone) toStack.push({ text: currentClient.phone, color: '#64748b' });
-
-            // Table rows with line items
-            const tableBody = [
-                [
-                    { text: 'DESCRIPTION', fontSize: 9, bold: true, color: '#475569', margin: [0, 8, 0, 8] },
-                    { text: 'AMOUNT', fontSize: 9, bold: true, color: '#475569', alignment: 'right', margin: [0, 8, 0, 8] }
-                ]
-            ];
-
-            let total = 0;
-            items.forEach(item => {
-                const itemPrice = parseFloat(item.price) || 0;
-                total += itemPrice;
-                const descStack = [
-                    { text: item.description || '', bold: true, fontSize: 10.5, color: '#0f172a' }
-                ];
-                if (item.sub) {
-                    descStack.push({ text: item.sub, fontSize: 9, color: '#64748b', margin: [0, 2, 0, 0] });
-                }
-                tableBody.push([
-                    { stack: descStack, margin: [0, 10, 0, 10] },
-                    { text: `${currencySymbol} ${itemPrice.toFixed(2)}`, alignment: 'right', fontSize: 10.5, color: '#0f172a', margin: [0, 10, 0, 10] }
-                ]);
-            });
-
-            // Advance & Balance Breakdown
-            const showAdvance = inputs.toggleAdvance.checked;
-            const showBalance = inputs.toggleBalance.checked;
-            const advanceVal = showAdvance ? (parseFloat(inputs.advanceAmount.value) || 0) : 0;
-            const balanceVal = total - advanceVal;
-
-            const breakdownRows = [];
-            if (showAdvance) {
-                breakdownRows.push([
-                    { text: 'Pay in Advance', color: '#64748b', fontSize: 10 },
-                    { text: `${currencySymbol} ${advanceVal.toFixed(2)}`, alignment: 'right', bold: true, fontSize: 10 }
-                ]);
-            }
-            if (showBalance) {
-                breakdownRows.push([
-                    { text: 'Pay upon Completion', color: '#64748b', fontSize: 10 },
-                    { text: `${currencySymbol} ${balanceVal.toFixed(2)}`, alignment: 'right', bold: true, fontSize: 10 }
-                ]);
-            }
-
-            // Payment Methods: PayPal & Wise
-            const p1 = profile.platforms?.[0] || { name: 'PayPal', email: '' };
-            const p2 = profile.platforms?.[1] || { name: 'Wise', email: '' };
-            const bank = profile.bank || {};
-
-            const paymentCols = [];
-            if (p1.email || p1.name) {
-                paymentCols.push({
-                    width: '32%',
-                    stack: [
-                        { text: p1.name || 'PayPal', bold: true, fontSize: 10, color: '#64748b', margin: [0, 0, 0, 4] },
-                        {
-                            text: [
-                                { text: 'Email   :   ', color: '#94a3b8', fontSize: 9 },
-                                { text: p1.email || '', fontSize: 9, color: '#1e293b' }
-                            ]
-                        }
-                    ]
-                });
-            }
-            if (p2.email || p2.name) {
-                paymentCols.push({
-                    width: '32%',
-                    stack: [
-                        { text: p2.name || 'Wise', bold: true, fontSize: 10, color: '#64748b', margin: [0, 0, 0, 4] },
-                        {
-                            text: [
-                                { text: 'Email   :   ', color: '#94a3b8', fontSize: 9 },
-                                { text: p2.email || '', fontSize: 9, color: '#1e293b' }
-                            ]
-                        }
-                    ]
-                });
-            }
-
-            // Bank details
-            const bankRows = [];
-            if (bank.bankName) bankRows.push([{ text: 'Bank Name', color: '#64748b', fontSize: 8.5 }, { text: `:  ${bank.bankName}`, fontSize: 8.5, color: '#1e293b' }]);
-            if (bank.branchName) bankRows.push([{ text: 'Branch Name', color: '#64748b', fontSize: 8.5 }, { text: `:  ${bank.branchName}`, fontSize: 8.5, color: '#1e293b' }]);
-            if (bank.branchCode) bankRows.push([{ text: 'Branch Code', color: '#64748b', fontSize: 8.5 }, { text: `:  ${bank.branchCode}`, fontSize: 8.5, color: '#1e293b' }]);
-            if (bank.swiftCode) bankRows.push([{ text: 'SWIFT Code', color: '#64748b', fontSize: 8.5 }, { text: `:  ${bank.swiftCode}`, fontSize: 8.5, color: '#1e293b' }]);
-            if (bank.routingNo) bankRows.push([{ text: 'Routing No', color: '#64748b', fontSize: 8.5 }, { text: `:  ${bank.routingNo}`, fontSize: 8.5, color: '#1e293b' }]);
-            if (bank.accountNumber) bankRows.push([{ text: 'A/C No', color: '#64748b', fontSize: 8.5 }, { text: `:  ${bank.accountNumber}`, fontSize: 8.5, color: '#1e293b' }]);
-
-            if (bankRows.length > 0) {
-                paymentCols.push({
-                    width: paymentCols.length > 0 ? '36%' : '*',
-                    stack: [
-                        {
-                            table: {
-                                widths: [65, '*'],
-                                body: bankRows
-                            },
-                            layout: 'noBorders'
-                        }
-                    ]
-                });
-            }
-
-            const docContent = [
-                // Top Header Row
-                {
-                    columns: [
-                        {
-                            width: 85,
-                            stack: [logoElement]
-                        },
-                        {
-                            width: '*',
-                            stack: [
-                                {
-                                    text: [
-                                        { text: 'Invoice', fontSize: 24, bold: true, color: '#0f172a' },
-                                        { text: '  |  ', fontSize: 18, color: '#cbd5e1' },
-                                        { text: toName, fontSize: 20, bold: true, color: '#334155' }
-                                    ],
-                                    margin: [0, 4, 0, 4]
-                                },
-                                {
-                                    text: [
-                                        { text: 'No. ', fontSize: 10, color: '#64748b' },
-                                        { text: invoiceNo, fontSize: 10, bold: true, color: '#0f172a' },
-                                        { text: '   |   ', fontSize: 10, color: '#cbd5e1' },
-                                        { text: 'Date: ', fontSize: 10, color: '#64748b' },
-                                        { text: formatDate(inputs.invoiceDate.value), fontSize: 10, bold: true, color: '#0f172a' }
-                                    ],
-                                    margin: [0, 0, 0, 18]
-                                },
-                                {
-                                    columns: [
-                                        { width: '*', stack: fromStack },
-                                        { width: '*', stack: toStack }
-                                    ]
-                                }
-                            ]
-                        }
-                    ],
-                    margin: [0, 0, 0, 28]
-                },
-
-                // Line Items Table
-                {
-                    table: {
-                        headerRows: 1,
-                        widths: ['*', 120],
-                        body: tableBody
-                    },
-                    layout: {
-                        hLineWidth: (i, node) => (i === 1 || i === node.table.body.length ? 1 : 0.5),
-                        vLineWidth: () => 0,
-                        hLineColor: () => '#e2e8f0',
-                        paddingLeft: () => 0,
-                        paddingRight: () => 0
-                    },
-                    margin: [0, 0, 0, 14]
-                },
-
-                // Total Pill
-                {
-                    columns: [
-                        { width: '*', text: '' },
-                        {
-                            width: 'auto',
-                            table: {
-                                body: [
-                                    [
-                                        {
-                                            text: [
-                                                { text: 'TOTAL    ', fontSize: 11, bold: true, color: '#ea4e25' },
-                                                { text: `${currencySymbol} ${total.toFixed(2)}`, fontSize: 13, bold: true, color: '#ea4e25' }
-                                            ],
-                                            margin: [16, 8, 16, 8]
-                                        }
-                                    ]
-                                ]
-                            },
-                            layout: {
-                                fillColor: '#fff5f2',
-                                hLineWidth: () => 0,
-                                vLineWidth: () => 0
-                            }
-                        }
-                    ],
-                    margin: [0, 0, 0, 16]
-                }
-            ];
-
-            // Optional advance/balance breakdown table
-            if (breakdownRows.length > 0) {
-                docContent.push({
-                    columns: [
-                        { width: '*', text: '' },
-                        {
-                            width: 220,
-                            table: {
-                                widths: ['*', 90],
-                                body: breakdownRows
-                            },
-                            layout: 'noBorders',
-                            margin: [0, 0, 0, 16]
-                        }
-                    ]
-                });
-            }
-
-            // Note
-            const noteText = settings.defaultNote || inputs.noteText?.value || 'Please complete your payment within 14 days, your cooperation is greatly appreciated.';
-            if (noteText) {
-                docContent.push({
-                    text: [
-                        { text: 'Note  :  ', color: '#94a3b8', fontSize: 9.5 },
-                        { text: noteText, color: '#475569', fontSize: 9.5 }
-                    ],
-                    margin: [0, 0, 0, 28]
-                });
-            }
-
-            // Payment info section (if any payment details present)
-            if (paymentCols.length > 0) {
-                docContent.push(
-                    {
-                        text: 'Payment info',
-                        fontSize: 13,
-                        bold: true,
-                        color: '#0f172a',
-                        margin: [0, 0, 0, 10]
-                    },
-                    {
-                        columns: paymentCols,
-                        margin: [0, 0, 0, 32]
+            styleTag.innerHTML = `
+                @media print {
+                    @page {
+                        size: ${width}px ${height}px;
+                        margin: 0;
                     }
-                );
-            }
-
-            // Footer Divider
-            docContent.push(
-                {
-                    canvas: [
-                        { type: 'line', x1: 0, y1: 0, x2: 499, y2: 0, lineWidth: 0.5, lineColor: '#f1f5f9' }
-                    ],
-                    margin: [0, 0, 0, 20]
-                },
-                // Thank You & Signature
-                {
-                    stack: [
-                        { text: 'Thank you!', fontSize: 16, bold: true, color: '#0f172a', margin: [0, 0, 0, 4] },
-                        {
-                            text: [
-                                { text: fromFullName || 'Authorized Signature', fontSize: 9.5, color: '#64748b' },
-                                ...(profile.mobile ? [
-                                    { text: '   |   ', color: '#cbd5e1' },
-                                    { text: 'Mobile: ', color: '#64748b', fontSize: 9.5 },
-                                    { text: profile.mobile, color: '#334155', fontSize: 9.5 }
-                                ] : [])
-                            ]
-                        }
-                    ]
-                }
-            );
-
-            const docDef = {
-                pageSize: 'A4',
-                pageMargins: [48, 48, 48, 48],
-                defaultStyle: {
-                    font: 'Roboto',
-                    fontSize: 10,
-                    color: '#1e293b',
-                    lineHeight: 1.3
-                },
-                content: docContent
-            };
-
-            const filename = `Invoice-${invoiceNo}.pdf`;
-            const pdfDoc = pdfMake.createPdf(docDef);
-
-            pdfDoc.getBlob(async (pdfBlob) => {
-                const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-                const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
-
-                let savedDirectly = false;
-
-                // On iOS Safari: use Web Share API so the user can immediately "Save to Files"
-                if (isIOS && isSafari && navigator.canShare) {
-                    try {
-                        const file = new File([pdfBlob], filename, { type: 'application/pdf' });
-                        if (navigator.canShare({ files: [file] })) {
-                            await navigator.share({
-                                files: [file],
-                                title: filename
-                            });
-                            savedDirectly = true;
-                            showToast(`Invoice #${invoiceNo} ready!`, 'success');
-                        }
-                    } catch (shareErr) {
-                        if (shareErr.name === 'AbortError') {
-                            savedDirectly = true;
-                        }
+                    .invoice-paper {
+                        width: ${width}px !important;
+                        height: ${height}px !important;
+                        margin: 0 !important;
                     }
                 }
+            `;
 
-                if (!savedDirectly) {
-                    const octetBlob = new Blob([pdfBlob], { type: 'application/pdf' });
-                    const blobUrl = URL.createObjectURL(octetBlob);
-                    const link = document.createElement('a');
-                    link.href = blobUrl;
-                    link.download = filename;
-                    link.rel = 'noopener';
-                    document.body.appendChild(link);
-                    link.click();
-                    setTimeout(() => {
-                        if (document.body.contains(link)) document.body.removeChild(link);
-                        URL.revokeObjectURL(blobUrl);
-                    }, 1500);
+            const originalTitle = document.title;
+            const invoiceNo = inputs.invoiceNumber.value;
+            document.title = `Invoice - ${invoiceNo}`;
 
-                    showToast(`Invoice #${invoiceNo} PDF downloaded!`, 'success');
-                }
-            });
+            window.print();
 
-        } catch (err) {
-            console.error('Vector PDF generation error, falling back to print:', err);
-            fallbackPrint(invoiceNo);
-        }
+            document.title = originalTitle;
+            wrapper.style.transform = originalTransform;
+
+            // Immediately start a fresh new invoice instead of continuing to edit the downloaded one
+            startNewInvoice(true);
+            showToast(`Invoice #${invoiceNo} downloaded! Ready for new invoice.`, 'success');
+        }, 60);
     };
 
-    printBtn.addEventListener('click', triggerDownloadPdf);
-    if (quickPrintBtn) quickPrintBtn.addEventListener('click', triggerDownloadPdf);
+    printBtn.addEventListener('click', triggerPrint);
+    if (quickPrintBtn) quickPrintBtn.addEventListener('click', triggerPrint);
 
     /* ---------------- Earnings & History ---------------- */
 
@@ -2273,8 +1589,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             const total = inv.total || 0;
             const row = document.createElement('tr');
             row.innerHTML = `
-                <td class="history-invno-cell"><strong>#${inv.invoiceNumber}</strong></td>
-                <td class="history-date-cell">${formatDate(inv.date)}</td>
+                <td><strong>#${inv.invoiceNumber}</strong></td>
+                <td>${formatDate(inv.date)}</td>
                 <td style="color: #fff; font-weight: 500;">${clientName}</td>
                 <td style="color: var(--accent-color); font-weight: 600;">$${total.toFixed(2)}</td>
                 <td>
@@ -2334,8 +1650,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (dbBadge) dbBadge.addEventListener('click', openSettingsTab);
 
     function loadProfileAndSettings() {
-        const profile = InvoiceDB.getProfile() || {};
-        const settings = InvoiceDB.getSettings() || {};
+        const profile = InvoiceDB.getProfile();
+        const settings = InvoiceDB.getSettings();
 
         settingInputs.firstName.value = profile.firstName || '';
         settingInputs.lastName.value = profile.lastName || '';
@@ -2343,11 +1659,11 @@ document.addEventListener('DOMContentLoaded', async () => {
         settingInputs.mobile.value = profile.mobile || '';
         settingInputs.address.value = profile.address || '';
 
-        const p1 = profile.platforms?.[0] || { name: 'PayPal', email: profile.email || '' };
+        const p1 = profile.platforms?.[0] || { name: 'Payoneer', email: profile.email || '' };
         const p2 = profile.platforms?.[1] || { name: 'Wise', email: profile.email || '' };
-        settingInputs.platform1Name.value = p1.name || 'PayPal';
+        settingInputs.platform1Name.value = p1.name || '';
         settingInputs.platform1Email.value = p1.email || '';
-        settingInputs.platform2Name.value = p2.name || 'Wise';
+        settingInputs.platform2Name.value = p2.name || '';
         settingInputs.platform2Email.value = p2.email || '';
 
         const bank = profile.bank || {};
@@ -2373,7 +1689,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function syncProfileToPreviewsAndDefaults() {
         const profile = InvoiceDB.getProfile();
-        const fullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Your Name';
+        const fullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Jarif Hasan';
 
         // From details in preview
         if (previews.fromName) previews.fromName.textContent = fullName;
@@ -2385,17 +1701,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (previews.mobile) previews.mobile.textContent = profile.mobile || '';
 
         // Platforms
-        const p1 = profile.platforms?.[0] || { name: 'PayPal', email: '' };
-        const p2 = profile.platforms?.[1] || { name: 'Wise', email: '' };
+        const p1 = profile.platforms?.[0] || { name: '', email: '' };
+        const p2 = profile.platforms?.[1] || { name: '', email: '' };
 
         const p1NameEl = document.getElementById('preview-platform1-name');
         const p1EmailEl = document.getElementById('preview-platform1-email');
-        if (p1NameEl) p1NameEl.textContent = p1.name || 'PayPal';
+        if (p1NameEl) p1NameEl.textContent = p1.name;
         if (p1EmailEl) p1EmailEl.textContent = p1.email;
 
         const p2NameEl = document.getElementById('preview-platform2-name');
         const p2EmailEl = document.getElementById('preview-platform2-email');
-        if (p2NameEl) p2NameEl.textContent = p2.name || 'Wise';
+        if (p2NameEl) p2NameEl.textContent = p2.name;
         if (p2EmailEl) p2EmailEl.textContent = p2.email;
 
         // Bank preview fields
@@ -2442,74 +1758,42 @@ document.addEventListener('DOMContentLoaded', async () => {
         return settings.currencySymbol || '$';
     }
 
+    // Attach listeners to Settings modal inputs
+    Object.keys(settingInputs).forEach(key => {
+        const input = settingInputs[key];
+        if (!input) return;
+        const eventType = (input.tagName === 'SELECT') ? 'change' : 'input';
+        input.addEventListener(eventType, async () => {
+            const profile = InvoiceDB.getProfile();
+            const settings = InvoiceDB.getSettings();
 
-    // Save all settings explicitly from UI (Called ONLY on button click)
-    async function saveAllSettingsFromUI(notify = false) {
-        const data = InvoiceDB.getData() || {};
-        data.isDemoData = false; // User has saved custom details (or cleared details)
-
-        if (!data.profile) data.profile = {};
-        if (!data.settings) data.settings = {};
-
-        const profile = data.profile;
-        const settings = data.settings;
-
-        profile.firstName = settingInputs.firstName ? settingInputs.firstName.value.trim() : '';
-        profile.lastName = settingInputs.lastName ? settingInputs.lastName.value.trim() : '';
-        profile.email = settingInputs.email ? settingInputs.email.value.trim() : '';
-        profile.mobile = settingInputs.mobile ? settingInputs.mobile.value.trim() : '';
-        profile.address = settingInputs.address ? settingInputs.address.value.trim() : '';
-
-        profile.platforms = [
-            {
-                id: 'platform1',
-                name: settingInputs.platform1Name ? settingInputs.platform1Name.value.trim() || 'PayPal' : 'PayPal',
-                email: settingInputs.platform1Email ? settingInputs.platform1Email.value.trim() : ''
-            },
-            {
-                id: 'platform2',
-                name: settingInputs.platform2Name ? settingInputs.platform2Name.value.trim() || 'Wise' : 'Wise',
-                email: settingInputs.platform2Email ? settingInputs.platform2Email.value.trim() : ''
+            if (key === 'defaultNote') {
+                settings.defaultNote = input.value;
+                await InvoiceDB.saveSettings(settings);
+            } else if (key === 'currency') {
+                const selectedOption = input.options[input.selectedIndex];
+                settings.currency = input.value;
+                settings.currencySymbol = (selectedOption && selectedOption.getAttribute('data-symbol')) || '$';
+                await InvoiceDB.saveSettings(settings);
+            } else if (key.startsWith('platform')) {
+                profile.platforms = [
+                    { id: 'platform1', name: settingInputs.platform1Name.value, email: settingInputs.platform1Email.value },
+                    { id: 'platform2', name: settingInputs.platform2Name.value, email: settingInputs.platform2Email.value }
+                ];
+                await InvoiceDB.saveProfile(profile);
+            } else if (['bankName', 'accountNumber', 'branchName', 'branchCode', 'swiftCode', 'routingNo'].includes(key)) {
+                if (!profile.bank) profile.bank = {};
+                profile.bank[key] = input.value;
+                await InvoiceDB.saveProfile(profile);
+            } else {
+                profile[key] = input.value;
+                await InvoiceDB.saveProfile(profile);
             }
-        ];
 
-        if (!profile.bank) profile.bank = {};
-        profile.bank.bankName = settingInputs.bankName ? settingInputs.bankName.value.trim() : '';
-        profile.bank.accountNumber = settingInputs.accountNumber ? settingInputs.accountNumber.value.trim() : '';
-        profile.bank.branchName = settingInputs.branchName ? settingInputs.branchName.value.trim() : '';
-        profile.bank.branchCode = settingInputs.branchCode ? settingInputs.branchCode.value.trim() : '';
-        profile.bank.swiftCode = settingInputs.swiftCode ? settingInputs.swiftCode.value.trim() : '';
-        profile.bank.routingNo = settingInputs.routingNo ? settingInputs.routingNo.value.trim() : '';
-
-        if (settingInputs.defaultNote) {
-            settings.defaultNote = settingInputs.defaultNote.value;
-        }
-
-        if (settingInputs.currency) {
-            const selectedOption = settingInputs.currency.options[settingInputs.currency.selectedIndex];
-            settings.currency = settingInputs.currency.value;
-            settings.currencySymbol = (selectedOption && selectedOption.getAttribute('data-symbol')) || '$';
-        }
-
-        data.profile = profile;
-        data.settings = settings;
-        await InvoiceDB.save(data);
-        syncProfileToPreviewsAndDefaults();
-        updateDBBadge();
-
-        if (notify) {
-            showToast('Profile & bank details saved successfully!', 'success');
-        }
-    }
-
-    // Auto-save is TURNED OFF for Settings inputs per user request.
-    // Inputs ONLY save when the user explicitly clicks "Save Profile & Bank Details".
-    const saveSettingsBtn = document.getElementById('save-settings-btn');
-    if (saveSettingsBtn) {
-        saveSettingsBtn.addEventListener('click', () => {
-            saveAllSettingsFromUI(true);
+            syncProfileToPreviewsAndDefaults();
+            updateDBBadge();
         });
-    }
+    });
 
     // Logo Handlers
     function updateLogoDisplay(base64) {
@@ -2613,17 +1897,12 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     resetDataBtn.addEventListener('click', async () => {
-        const confirmed = confirm('WARNING: Are you sure you want to delete all data?\n\nThis will permanently delete ALL invoices, clients, profile settings, bank details, and logo from the database.');
+        const confirmed = confirm('WARNING: Are you sure you want to delete all data? This will clear all clients, invoices, profile settings and database records.');
         if (confirmed) {
-            try {
-                await InvoiceDB.deleteAllData();
-                showToast('All database records deleted!', 'info');
-                setTimeout(() => {
-                    location.reload();
-                }, 400);
-            } catch (err) {
-                console.error(err);
-                alert('Failed to delete data: ' + err.message);
+            const doubleCheck = prompt('Type "DELETE" to confirm permanent deletion of all data:');
+            if (doubleCheck && doubleCheck.trim().toUpperCase() === 'DELETE') {
+                await InvoiceDB.resetDatabase();
+                location.reload();
             }
         }
     });
@@ -2821,6 +2100,9 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // 5. Responsive auto-fit zoom for small screens
     autoFitZoom();
-    window.addEventListener('resize', autoFitZoom);
-    window.addEventListener('orientationchange', () => setTimeout(autoFitZoom, 150));
+    window.addEventListener('resize', () => {
+        if (currentZoom !== 1.0) {
+            autoFitZoom();
+        }
+    });
 });
