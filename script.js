@@ -1758,42 +1758,71 @@ document.addEventListener('DOMContentLoaded', async () => {
         return settings.currencySymbol || '$';
     }
 
-    // Attach listeners to Settings modal inputs
-    Object.keys(settingInputs).forEach(key => {
-        const input = settingInputs[key];
-        if (!input) return;
-        const eventType = (input.tagName === 'SELECT') ? 'change' : 'input';
-        input.addEventListener(eventType, async () => {
-            const profile = InvoiceDB.getProfile();
-            const settings = InvoiceDB.getSettings();
+    // Save all settings explicitly from UI (Called ONLY on Save button click)
+    async function saveAllSettingsFromUI(notify = false) {
+        const data = InvoiceDB.getData() || {};
+        if (!data.profile) data.profile = {};
+        if (!data.settings) data.settings = {};
 
-            if (key === 'defaultNote') {
-                settings.defaultNote = input.value;
-                await InvoiceDB.saveSettings(settings);
-            } else if (key === 'currency') {
-                const selectedOption = input.options[input.selectedIndex];
-                settings.currency = input.value;
-                settings.currencySymbol = (selectedOption && selectedOption.getAttribute('data-symbol')) || '$';
-                await InvoiceDB.saveSettings(settings);
-            } else if (key.startsWith('platform')) {
-                profile.platforms = [
-                    { id: 'platform1', name: settingInputs.platform1Name.value, email: settingInputs.platform1Email.value },
-                    { id: 'platform2', name: settingInputs.platform2Name.value, email: settingInputs.platform2Email.value }
-                ];
-                await InvoiceDB.saveProfile(profile);
-            } else if (['bankName', 'accountNumber', 'branchName', 'branchCode', 'swiftCode', 'routingNo'].includes(key)) {
-                if (!profile.bank) profile.bank = {};
-                profile.bank[key] = input.value;
-                await InvoiceDB.saveProfile(profile);
-            } else {
-                profile[key] = input.value;
-                await InvoiceDB.saveProfile(profile);
+        const profile = data.profile;
+        const settings = data.settings;
+
+        profile.firstName = settingInputs.firstName ? settingInputs.firstName.value.trim() : '';
+        profile.lastName = settingInputs.lastName ? settingInputs.lastName.value.trim() : '';
+        profile.email = settingInputs.email ? settingInputs.email.value.trim() : '';
+        profile.mobile = settingInputs.mobile ? settingInputs.mobile.value.trim() : '';
+        profile.address = settingInputs.address ? settingInputs.address.value.trim() : '';
+
+        profile.platforms = [
+            {
+                id: 'platform1',
+                name: settingInputs.platform1Name ? settingInputs.platform1Name.value.trim() || 'Payoneer' : 'Payoneer',
+                email: settingInputs.platform1Email ? settingInputs.platform1Email.value.trim() : ''
+            },
+            {
+                id: 'platform2',
+                name: settingInputs.platform2Name ? settingInputs.platform2Name.value.trim() || 'Wise' : 'Wise',
+                email: settingInputs.platform2Email ? settingInputs.platform2Email.value.trim() : ''
             }
+        ];
 
-            syncProfileToPreviewsAndDefaults();
-            updateDBBadge();
+        if (!profile.bank) profile.bank = {};
+        profile.bank.bankName = settingInputs.bankName ? settingInputs.bankName.value.trim() : '';
+        profile.bank.accountNumber = settingInputs.accountNumber ? settingInputs.accountNumber.value.trim() : '';
+        profile.bank.branchName = settingInputs.branchName ? settingInputs.branchName.value.trim() : '';
+        profile.bank.branchCode = settingInputs.branchCode ? settingInputs.branchCode.value.trim() : '';
+        profile.bank.swiftCode = settingInputs.swiftCode ? settingInputs.swiftCode.value.trim() : '';
+        profile.bank.routingNo = settingInputs.routingNo ? settingInputs.routingNo.value.trim() : '';
+
+        if (settingInputs.defaultNote) {
+            settings.defaultNote = settingInputs.defaultNote.value;
+        }
+
+        if (settingInputs.currency) {
+            const selectedOption = settingInputs.currency.options[settingInputs.currency.selectedIndex];
+            settings.currency = settingInputs.currency.value;
+            settings.currencySymbol = (selectedOption && selectedOption.getAttribute('data-symbol')) || '$';
+        }
+
+        data.profile = profile;
+        data.settings = settings;
+        await InvoiceDB.save(data);
+        syncProfileToPreviewsAndDefaults();
+        updateDBBadge();
+
+        if (notify) {
+            showToast('Profile & bank details saved successfully!', 'success');
+        }
+    }
+
+    // Auto-save is TURNED OFF for Settings inputs per user request.
+    // Inputs ONLY save when the user explicitly clicks "Save Profile & Bank Details".
+    const saveSettingsBtn = document.getElementById('save-settings-btn');
+    if (saveSettingsBtn) {
+        saveSettingsBtn.addEventListener('click', () => {
+            saveAllSettingsFromUI(true);
         });
-    });
+    }
 
     // Logo Handlers
     function updateLogoDisplay(base64) {

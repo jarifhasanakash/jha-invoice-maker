@@ -1681,9 +1681,9 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
 
 .col-divider {
     width: 1px;
-    height: -webkit-fill-available;
-    min-height: 88px;
+    align-self: stretch;
     background-color: var(--border-color);
+    flex-shrink: 0;
 }
 
 .col-amount {
