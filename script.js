@@ -161,6 +161,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const historyStatusFilter = document.getElementById('history-status-filter');
     const historyFromInput = document.getElementById('history-from-date');
     const historyToInput = document.getElementById('history-to-date');
+    const invoicesListContainer = document.getElementById('invoices-list-container');
+    const historyPagination = document.getElementById('history-pagination');
+    const historyTotalCountBadge = document.getElementById('history-total-count-badge');
     const historyTableBody = document.getElementById('history-table-body');
     const exportCsvBtn = document.getElementById('export-csv-btn');
     const exportInvoicesJsonBtn = document.getElementById('export-invoices-json-btn');
@@ -168,6 +171,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     const statTotalPaid = document.getElementById('stat-total-paid');
     const statTotalPending = document.getElementById('stat-total-pending');
     const statInvoicesCount = document.getElementById('stat-invoices-count');
+
+    let currentHistoryPage = 1;
+    const INVOICES_PER_PAGE = 20;
 
     // Toast Container
     const toastContainer = document.getElementById('toast-container');
@@ -1249,13 +1255,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
         });
 
-        // Blur sidebar and prevent edits when in non-invoice tabs
+        // Hide sidebar and expand full view when in non-invoice tabs
         const sidebarEl = document.querySelector('.sidebar');
+        const appBodyEl = document.querySelector('.app-body');
         if (sidebarEl) {
             if (tabKey !== 'tab-invoice') {
-                sidebarEl.classList.add('sidebar-blurred');
+                sidebarEl.classList.add('sidebar-blurred', 'sidebar-hidden');
+                if (appBodyEl) appBodyEl.classList.add('non-invoice-active');
             } else {
-                sidebarEl.classList.remove('sidebar-blurred');
+                sidebarEl.classList.remove('sidebar-blurred', 'sidebar-hidden');
+                if (appBodyEl) appBodyEl.classList.remove('non-invoice-active');
             }
         }
 
@@ -1537,6 +1546,41 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     /* ---------------- Earnings & History ---------------- */
 
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function getPaginationPages(current, total) {
+        if (total <= 7) {
+            const pages = [];
+            for (let i = 1; i <= total; i++) pages.push(i);
+            return pages;
+        }
+        if (current <= 4) {
+            return [1, 2, 3, 4, 5, '...', total];
+        }
+        if (current >= total - 3) {
+            return [1, '...', total - 4, total - 3, total - 2, total - 1, total];
+        }
+        return [1, '...', current - 1, current, current + 1, '...', total];
+    }
+
+    function changeHistoryPage(newPage) {
+        currentHistoryPage = newPage;
+        updateEarningsDisplay();
+        const historyContainer = document.getElementById('view-history');
+        if (historyContainer) {
+            historyContainer.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+    window.changeHistoryPage = changeHistoryPage;
+
     function updateEarningsDisplay() {
         const invoices = InvoiceDB.getInvoices();
         const fromDateISO = historyFromInput.value ? toISODate(historyFromInput.value) : '';
@@ -1593,53 +1637,129 @@ document.addEventListener('DOMContentLoaded', async () => {
         statTotalPending.textContent = `$${totalPending.toFixed(2)}`;
         statInvoicesCount.textContent = invoices.length;
 
-        // Render Invoices Table
-        historyTableBody.innerHTML = '';
-        if (filtered.length === 0) {
-            historyTableBody.innerHTML = `
-                <tr>
-                    <td colspan="6" style="text-align: center; color: #888; padding: 36px 20px;">
-                        No matching invoices found in database.
-                    </td>
-                </tr>
-            `;
-            return;
+        if (historyTotalCountBadge) {
+            historyTotalCountBadge.textContent = `${filtered.length} ${filtered.length === 1 ? 'Invoice' : 'Invoices'}`;
         }
 
-        filtered.forEach(inv => {
-            const clientName = inv.client?.name || inv.to?.name || inv.client || 'Client';
-            const status = inv.status || 'Pending';
-            const total = inv.total || 0;
-            const row = document.createElement('tr');
-            row.innerHTML = `
-                <td><strong>#${inv.invoiceNumber}</strong></td>
-                <td>${formatDate(inv.date)}</td>
-                <td style="color: #fff; font-weight: 500;">${clientName}</td>
-                <td style="color: var(--accent-color); font-weight: 600;">$${total.toFixed(2)}</td>
-                <td class="table-status-cell">
-                    <select class="table-status-select" onchange="changeInvoiceStatus('${inv.id}', this.value)">
-                        <option value="Paid" ${status === 'Paid' ? 'selected' : ''}>Paid</option>
-                        <option value="Pending" ${status === 'Pending' ? 'selected' : ''}>Pending</option>
-                        <option value="Draft" ${status === 'Draft' ? 'selected' : ''}>Draft</option>
-                        <option value="Overdue" ${status === 'Overdue' ? 'selected' : ''}>Overdue</option>
-                    </select>
-                </td>
-                <td class="table-actions-cell">
-                    <button class="action-icon-btn" onclick="loadInvoiceIntoEditor('${inv.id}')" title="Edit in invoice maker"><i class="ph ph-pencil-simple"></i></button>
-                    <button class="action-icon-btn" onclick="duplicateInvoice('${inv.id}')" title="Duplicate invoice"><i class="ph ph-copy"></i></button>
-                    <button class="action-icon-btn delete-btn" onclick="deleteInvoiceHandler('${inv.id}')" title="Delete invoice"><i class="ph ph-trash"></i></button>
-                </td>
-            `;
-            historyTableBody.appendChild(row);
-            // Init custom select for this row's status dropdown
-            initCustomSelects(row);
-        });
+        // Pagination calculation
+        const totalItems = filtered.length;
+        const totalPages = Math.max(1, Math.ceil(totalItems / INVOICES_PER_PAGE));
+        if (currentHistoryPage > totalPages) currentHistoryPage = totalPages;
+        if (currentHistoryPage < 1) currentHistoryPage = 1;
+
+        const startIdx = (currentHistoryPage - 1) * INVOICES_PER_PAGE;
+        const pageItems = filtered.slice(startIdx, startIdx + INVOICES_PER_PAGE);
+
+        // Render Invoices List Container
+        if (invoicesListContainer) {
+            invoicesListContainer.innerHTML = '';
+            if (totalItems === 0) {
+                invoicesListContainer.innerHTML = `
+                    <div class="invoices-empty-state">
+                        <i class="ph ph-receipt"></i>
+                        <p>${query || statusFilter !== 'ALL' || fromDateISO || toDateISO ? 'No invoices match your search filters.' : 'No invoices created yet. Click "+ New" above to create an invoice.'}</p>
+                    </div>
+                `;
+            } else {
+                pageItems.forEach(inv => {
+                    const clientName = inv.client?.name || inv.to?.name || inv.client || 'Client';
+                    const status = inv.status || 'Pending';
+                    const total = inv.total || 0;
+                    const itemCount = (inv.items && Array.isArray(inv.items)) ? inv.items.length : 0;
+
+                    const card = document.createElement('div');
+                    card.className = 'invoice-row-card';
+                    card.setAttribute('data-id', inv.id);
+                    card.innerHTML = `
+                        <div class="inv-card-left">
+                            <div class="inv-number-badge">#${inv.invoiceNumber}</div>
+                            <div class="inv-info-col">
+                                <div class="inv-client-name" title="${escapeHtml(clientName)}">${escapeHtml(clientName)}</div>
+                                <div class="inv-meta-row">
+                                    <span class="inv-date"><i class="ph ph-calendar-blank"></i> ${formatDate(inv.date)}</span>
+                                    <span class="inv-items-count"><i class="ph ph-receipt"></i> ${itemCount} ${itemCount === 1 ? 'item' : 'items'}</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="inv-card-right">
+                            <div class="inv-amount-badge">
+                                <span class="inv-amount-val">$${total.toFixed(2)}</span>
+                            </div>
+                            <div class="inv-status-col">
+                                <select class="table-status-select" onchange="changeInvoiceStatus('${inv.id}', this.value)">
+                                    <option value="Paid" ${status === 'Paid' ? 'selected' : ''}>Paid</option>
+                                    <option value="Pending" ${status === 'Pending' ? 'selected' : ''}>Pending</option>
+                                    <option value="Draft" ${status === 'Draft' ? 'selected' : ''}>Draft</option>
+                                    <option value="Overdue" ${status === 'Overdue' ? 'selected' : ''}>Overdue</option>
+                                </select>
+                            </div>
+                            <div class="inv-actions-col">
+                                <button class="action-icon-btn" onclick="loadInvoiceIntoEditor('${inv.id}')" title="Edit in invoice maker"><i class="ph ph-pencil-simple"></i></button>
+                                <button class="action-icon-btn" onclick="duplicateInvoice('${inv.id}')" title="Duplicate invoice"><i class="ph ph-copy"></i></button>
+                                <button class="action-icon-btn delete-btn" onclick="deleteInvoiceHandler('${inv.id}')" title="Delete invoice"><i class="ph ph-trash"></i></button>
+                            </div>
+                        </div>
+                    `;
+                    invoicesListContainer.appendChild(card);
+                    initCustomSelects(card);
+                });
+            }
+        }
+
+        // Render Pagination Controls
+        if (historyPagination) {
+            historyPagination.innerHTML = '';
+            if (totalItems > 0) {
+                const endIdx = Math.min(startIdx + INVOICES_PER_PAGE, totalItems);
+                let pagHtml = `
+                    <div class="pagination-info">
+                        Showing <strong>${startIdx + 1}–${endIdx}</strong> of <strong>${totalItems}</strong> ${totalItems === 1 ? 'invoice' : 'invoices'}
+                    </div>
+                `;
+
+                if (totalPages > 1) {
+                    pagHtml += `<div class="pagination-nav">`;
+                    pagHtml += `
+                        <button class="page-btn page-nav-btn" ${currentHistoryPage === 1 ? 'disabled' : ''} onclick="changeHistoryPage(${currentHistoryPage - 1})" title="Previous Page">
+                            <i class="ph ph-caret-left"></i> Prev
+                        </button>
+                    `;
+
+                    const pageNumbers = getPaginationPages(currentHistoryPage, totalPages);
+                    pageNumbers.forEach(p => {
+                        if (p === '...') {
+                            pagHtml += `<span class="page-ellipsis">…</span>`;
+                        } else {
+                            pagHtml += `
+                                <button class="page-btn ${p === currentHistoryPage ? 'active' : ''}" onclick="changeHistoryPage(${p})">
+                                    ${p}
+                                </button>
+                            `;
+                        }
+                    });
+
+                    pagHtml += `
+                        <button class="page-btn page-nav-btn" ${currentHistoryPage === totalPages ? 'disabled' : ''} onclick="changeHistoryPage(${currentHistoryPage + 1})" title="Next Page">
+                            Next <i class="ph ph-caret-right"></i>
+                        </button>
+                    `;
+                    pagHtml += `</div>`;
+                }
+
+                historyPagination.innerHTML = pagHtml;
+            }
+        }
     }
 
-    historySearchInput.addEventListener('input', updateEarningsDisplay);
-    historyStatusFilter.addEventListener('change', updateEarningsDisplay);
-    historyFromInput.addEventListener('input', updateEarningsDisplay);
-    historyToInput.addEventListener('input', updateEarningsDisplay);
+    const resetPageAndUpdateEarnings = () => {
+        currentHistoryPage = 1;
+        updateEarningsDisplay();
+    };
+
+    historySearchInput.addEventListener('input', resetPageAndUpdateEarnings);
+    historyStatusFilter.addEventListener('change', resetPageAndUpdateEarnings);
+    historyFromInput.addEventListener('input', resetPageAndUpdateEarnings);
+    historyToInput.addEventListener('input', resetPageAndUpdateEarnings);
 
     exportCsvBtn.addEventListener('click', () => {
         try {
@@ -2055,7 +2175,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                 document.querySelectorAll('.cs-wrapper.open').forEach(w => {
                     if (w !== wrapper) {
                         w.classList.remove('open');
-                        w.closest('tr')?.classList.remove('cs-row-open');
+                        const pEl = w.closest('.invoice-row-card, tr');
+                        if (pEl) {
+                            pEl.classList.remove('cs-card-open', 'cs-row-open');
+                        }
                         w.querySelector('.cs-dropdown')?.classList.remove('cs-drop-up');
                         w.querySelector('.cs-trigger')?.setAttribute('aria-expanded', 'false');
                     }
@@ -2073,13 +2196,19 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
 
                 wrapper.classList.add('open');
-                wrapper.closest('tr')?.classList.add('cs-row-open');
+                const parentRow = wrapper.closest('.invoice-row-card, tr');
+                if (parentRow) {
+                    parentRow.classList.add('cs-card-open', 'cs-row-open');
+                }
                 trigger.setAttribute('aria-expanded', 'true');
             }
 
             function closeDropdown() {
                 wrapper.classList.remove('open');
-                wrapper.closest('tr')?.classList.remove('cs-row-open');
+                const parentRow = wrapper.closest('.invoice-row-card, tr');
+                if (parentRow) {
+                    parentRow.classList.remove('cs-card-open', 'cs-row-open');
+                }
                 dropdown.classList.remove('cs-drop-up');
                 trigger.setAttribute('aria-expanded', 'false');
             }
@@ -2132,7 +2261,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         const closeAllCustomSelects = () => {
             document.querySelectorAll('.cs-wrapper.open').forEach(w => {
                 w.classList.remove('open');
-                w.closest('tr')?.classList.remove('cs-row-open');
+                const pEl = w.closest('.invoice-row-card, tr');
+                if (pEl) {
+                    pEl.classList.remove('cs-card-open', 'cs-row-open');
+                }
                 w.querySelector('.cs-dropdown')?.classList.remove('cs-drop-up');
                 w.querySelector('.cs-trigger')?.setAttribute('aria-expanded', 'false');
             });

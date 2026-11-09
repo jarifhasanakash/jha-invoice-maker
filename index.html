@@ -15,7 +15,7 @@
     <!-- Phosphor Icons (Regular & Bold) -->
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css">
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/bold/style.css">
-    <link rel="stylesheet" href="styles.css?v=5.2">
+    <link rel="stylesheet" href="styles.css?v=5.3">
     <script src="db.js"></script>
 </head>
 
@@ -469,24 +469,17 @@
                             </div>
                         </section>
 
-                        <!-- Invoices Data Table -->
-                        <section class="settings-section">
-                            <div class="data-table-wrapper">
-                                <table class="data-table">
-                                    <thead>
-                                        <tr>
-                                            <th>No.</th>
-                                            <th>Date</th>
-                                            <th>Client</th>
-                                            <th>Amount</th>
-                                            <th>Status</th>
-                                            <th style="width: 130px; text-align: right;">Actions</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="history-table-body">
-                                        <!-- Injected via JS -->
-                                    </tbody>
-                                </table>
+                        <!-- Invoices List (No table, modern cards with pagination) -->
+                        <section class="settings-section history-invoices-section">
+                            <div class="history-list-header">
+                                <span class="history-list-title">All Invoices</span>
+                                <span id="history-total-count-badge" class="history-count-badge">0 Invoices</span>
+                            </div>
+                            <div id="invoices-list-container" class="invoices-list-container">
+                                <!-- Injected via JS -->
+                            </div>
+                            <div id="history-pagination" class="history-pagination-container">
+                                <!-- Pagination injected via JS -->
                             </div>
                         </section>
                     </div>
@@ -755,7 +748,7 @@
     <!-- Toast Notification Container -->
     <div id="toast-container" class="toast-container"></div>
 
-    <script src="script.js?v=5.2"></script>
+    <script src="script.js?v=5.3"></script>
 </body>
 
 </html>
