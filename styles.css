@@ -2508,6 +2508,161 @@ input[type="checkbox"]:checked::before {
     justify-content: space-between;
     margin-bottom: 12px;
     padding: 0 2px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.history-list-header-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+/* Bulk Action Bar */
+.history-bulk-bar {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    background: var(--bg-surface);
+    border: 1px solid rgba(var(--color-brand-rgb), 0.35);
+    border-radius: 8px;
+    padding: 6px 14px;
+    animation: bulkBarSlide 0.18s ease-out;
+}
+
+.history-bulk-bar.hidden {
+    display: none !important;
+}
+
+@keyframes bulkBarSlide {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.bulk-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.bulk-selected-text {
+    font-size: 12.5px;
+    font-weight: 600;
+    color: var(--text-white);
+    white-space: nowrap;
+}
+
+.bulk-bar-actions {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bulk-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 30px;
+    padding: 0 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    background: var(--bg-surface-hover);
+    color: var(--text-white);
+    border: 1px solid var(--border-subtle);
+    transition: all 0.15s ease;
+    white-space: nowrap;
+}
+
+.bulk-action-btn:hover {
+    background: var(--bg-app);
+    border-color: rgba(var(--color-white-rgb), 0.25);
+}
+
+.bulk-action-btn.bulk-delete-btn {
+    color: #ef4444;
+    border-color: rgba(239, 68, 68, 0.3);
+    background: rgba(239, 68, 68, 0.08);
+}
+
+.bulk-action-btn.bulk-delete-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: #ef4444;
+}
+
+.bulk-cancel-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-dimmed);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    font-size: 15px;
+}
+
+.bulk-cancel-btn:hover {
+    color: var(--text-white);
+    background: var(--bg-surface-hover);
+}
+
+/* Custom Row Checkbox */
+.inv-checkbox-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+}
+
+.inv-checkbox-wrap input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    cursor: pointer;
+    z-index: 2;
+}
+
+.inv-checkbox-custom {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 1.5px solid var(--border-subtle);
+    background: var(--bg-surface);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.15s ease;
+}
+
+.inv-checkbox-wrap:hover .inv-checkbox-custom {
+    border-color: rgba(var(--color-brand-rgb), 0.5);
+}
+
+.inv-checkbox-wrap input[type="checkbox"]:checked ~ .inv-checkbox-custom {
+    background: var(--color-brand-primary);
+    border-color: var(--color-brand-primary);
+}
+
+.inv-checkbox-wrap input[type="checkbox"]:checked ~ .inv-checkbox-custom::after {
+    content: '';
+    width: 4px;
+    height: 8px;
+    border: solid #ffffff;
+    border-width: 0 2px 2px 0;
+    transform: rotate(45deg);
+    margin-bottom: 2px;
 }
 
 .history-list-title {
@@ -2555,15 +2710,27 @@ input[type="checkbox"]:checked::before {
     box-shadow: 0 4px 16px rgba(var(--color-black-rgb), 0.3);
 }
 
+.invoice-row-card.selected {
+    border-color: rgba(var(--color-brand-rgb), 0.4);
+    background: rgba(var(--color-brand-rgb), 0.04);
+}
+
 .invoice-row-card:has(.cs-wrapper.open),
 .invoice-row-card.cs-card-open {
     z-index: 100 !important;
 }
 
+.invoice-row-card:has(.action-menu-wrap.open),
+.invoice-row-card.row-menu-open,
+.client-card:has(.action-menu-wrap.open),
+.client-card.row-menu-open {
+    z-index: 120 !important;
+}
+
 .inv-card-left {
     display: flex;
     align-items: center;
-    gap: 16px;
+    gap: 14px;
     min-width: 0;
     flex: 1;
 }
@@ -2571,13 +2738,13 @@ input[type="checkbox"]:checked::before {
 .inv-number-badge {
     font-family: var(--font-mono);
     font-size: 13px;
-    font-weight: 700;
-    color: var(--color-brand-primary);
-    background: rgba(var(--color-brand-rgb), 0.12);
-    border: 1px solid rgba(var(--color-brand-rgb), 0.28);
-    padding: 5px 12px;
+    font-weight: 400;
+    color: var(--text-secondary);
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    padding: 3px 8px;
     border-radius: 6px;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
     flex-shrink: 0;
 }
 
@@ -2636,6 +2803,123 @@ input[type="checkbox"]:checked::before {
     display: flex;
     align-items: center;
     gap: 6px;
+}
+
+/* 3-Dot Action Dropdown Menu (Unified for Invoices & Clients) */
+.action-menu-wrap {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+}
+
+.action-menu-trigger {
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    padding: 0;
+}
+
+.action-menu-trigger:hover,
+.action-menu-wrap.open .action-menu-trigger {
+    background: var(--bg-surface-hover);
+    color: var(--text-white);
+    border-color: rgba(var(--color-brand-rgb), 0.4);
+}
+
+.action-menu-trigger i.ph {
+    font-size: 18px;
+    line-height: 1;
+}
+
+.action-menu-dropdown {
+    position: absolute;
+    top: calc(100% + 6px);
+    right: 0;
+    min-width: 165px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    box-shadow: 0 12px 32px rgba(var(--color-black-rgb), 0.6), 0 2px 8px rgba(var(--color-black-rgb), 0.4);
+    padding: 5px;
+    display: none;
+    flex-direction: column;
+    gap: 2px;
+    z-index: 130;
+    opacity: 1;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.action-menu-wrap.open .action-menu-dropdown {
+    display: flex;
+    opacity: 1 !important;
+    animation: menuFadeIn 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.action-menu-wrap.open-up .action-menu-dropdown {
+    top: auto;
+    bottom: calc(100% + 6px);
+}
+
+@keyframes menuFadeIn {
+    from { transform: translateY(-4px) scale(0.97); }
+    to { transform: translateY(0); }
+}
+
+.menu-action-item {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    width: 100%;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 12.5px;
+    font-weight: 500;
+    text-align: left;
+    cursor: pointer;
+    transition: all 0.12s ease;
+    white-space: nowrap;
+}
+
+.menu-action-item i.ph {
+    font-size: 15px;
+    color: var(--text-dimmed);
+    transition: color 0.12s ease;
+}
+
+.menu-action-item:hover {
+    background: var(--bg-surface-hover);
+    color: var(--text-white);
+}
+
+.menu-action-item:hover i.ph {
+    color: var(--color-brand-primary);
+}
+
+.menu-action-item.danger:hover {
+    background: rgba(239, 68, 68, 0.12);
+    color: #ef4444;
+}
+
+.menu-action-item.danger:hover i.ph {
+    color: #ef4444;
+}
+
+.menu-separator {
+    height: 1px;
+    background: var(--border-subtle);
+    margin: 3px 0;
 }
 
 .invoices-empty-state {
@@ -3340,25 +3624,26 @@ input[type="checkbox"]:checked::before {
     display: flex;
     flex-direction: column;
     gap: 10px;
-    max-height: 480px;
-    overflow-y: auto;
-    padding-right: 4px;
+    overflow: visible;
 }
 
 .client-card {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: var(--bg-surface);
+    background: var(--bg-app);
     border: 1px solid var(--border-subtle);
-    border-radius: 8px;
-    padding: 14px 18px;
-    transition: all 0.2s;
+    border-radius: 9px;
+    padding: 12px 18px;
+    position: relative;
+    transition: border-color 0.18s ease, background-color 0.18s ease, box-shadow 0.18s ease, transform 0.15s ease;
 }
 
 .client-card:hover {
-    border-color: var(--color-neutral-680);
     background: var(--bg-surface-hover);
+    border-color: rgba(var(--color-brand-rgb), 0.35);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 16px rgba(var(--color-black-rgb), 0.3);
 }
 
 .client-card-info h4 {

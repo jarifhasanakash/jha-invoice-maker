@@ -998,9 +998,26 @@ document.addEventListener('DOMContentLoaded', async () => {
                     ${client.notes ? `<div class="client-card-notes"><i class="ph ph-note"></i> ${client.notes}</div>` : ''}
                 </div>
                 <div class="client-card-actions">
-                    <button class="action-icon-btn" onclick="useClientInInvoice('${client.id}')" title="Use client in current invoice"><i class="ph ph-arrow-square-in"></i></button>
-                    <button class="action-icon-btn" onclick="editClient('${client.id}')" title="Edit client details"><i class="ph ph-pencil-simple"></i></button>
-                    <button class="action-icon-btn delete-btn" onclick="deleteClientHandler('${client.id}')" title="Delete client"><i class="ph ph-trash"></i></button>
+                    <div class="action-menu-wrap">
+                        <button type="button" class="action-menu-trigger" onclick="toggleRowMenu(this, event)" title="Client actions" aria-label="Client actions">
+                            <i class="ph ph-dots-three-vertical"></i>
+                        </button>
+                        <div class="action-menu-dropdown" onclick="event.stopPropagation()">
+                            <button type="button" class="menu-action-item" onclick="useClientInInvoice('${client.id}'); closeAllRowMenus();">
+                                <i class="ph ph-arrow-square-in"></i>
+                                <span>Use in Invoice</span>
+                            </button>
+                            <button type="button" class="menu-action-item" onclick="editClient('${client.id}'); closeAllRowMenus();">
+                                <i class="ph ph-pencil-simple"></i>
+                                <span>Edit Client</span>
+                            </button>
+                            <div class="menu-separator"></div>
+                            <button type="button" class="menu-action-item danger" onclick="deleteClientHandler('${client.id}'); closeAllRowMenus();">
+                                <i class="ph ph-trash"></i>
+                                <span>Delete</span>
+                            </button>
+                        </div>
+                    </div>
                 </div>
             `;
             clientsListContainer.appendChild(card);
@@ -1358,7 +1375,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
-    window.loadInvoiceIntoEditor = (idOrNumber) => {
+    window.loadInvoiceIntoEditor = (idOrNumber, switchToTab = true, silent = false) => {
         const inv = InvoiceDB.getInvoice(idOrNumber);
         if (!inv) return;
 
@@ -1402,8 +1419,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         renderItemsInput();
         updatePreview();
-        switchTab('tab-invoice');
-        showToast(`Loaded Invoice #${inv.invoiceNumber} into editor`, 'info');
+        if (switchToTab) {
+            switchTab('tab-invoice');
+        }
+        if (!silent) {
+            showToast(`Loaded Invoice #${inv.invoiceNumber} into editor`, 'info');
+        }
     };
 
     window.duplicateInvoice = (idOrNumber) => {
@@ -1443,10 +1464,13 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!confirm(`Are you sure you want to delete Invoice #${invNo} from the database?`)) return;
 
         await InvoiceDB.deleteInvoice(idOrNumber);
+        selectedInvoiceIds.delete(idOrNumber);
+        if (inv) selectedInvoiceIds.delete(inv.id);
         if (currentEditingInvoiceId === idOrNumber || inputs.invoiceNumber.value === invNo) {
             startNewInvoice();
         }
         updateEarningsDisplay();
+        window.updateBulkBarState();
         updateDBBadge();
         showToast(`Invoice #${invNo} deleted`, 'info');
     };
@@ -1485,7 +1509,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 2. Temporarily unscale wrapper to measure exact physical dimensions
         if (wrapper) wrapper.style.transform = 'none';
 
-        setTimeout(() => {
+        setTimeout(async () => {
             // Measure exact physical height (strictly exact, zero extra buffer to eliminate 2nd page)
             const exactHeight = Math.ceil(element.getBoundingClientRect().height);
             const width = 1080;
@@ -1530,6 +1554,34 @@ document.addEventListener('DOMContentLoaded', async () => {
             const originalTitle = document.title;
             const invoiceNo = inputs.invoiceNumber.value;
             document.title = `Invoice - ${invoiceNo}`;
+
+            // Check if running inside Electron Native Desktop App
+            if (window.electronAPI && typeof window.electronAPI.exportPdf === 'function') {
+                showToast(`Generating single-page PDF for Invoice #${invoiceNo}...`, 'info');
+                try {
+                    const result = await window.electronAPI.exportPdf({
+                        filename: `Invoice-${invoiceNo}.pdf`,
+                        width: width,
+                        height: exactHeight
+                    });
+
+                    if (result && result.success) {
+                        showToast(`Invoice #${invoiceNo} saved successfully!`, 'success');
+                    } else if (result && result.canceled) {
+                        // User canceled save dialog - no error needed
+                    } else if (result && result.error) {
+                        showToast(`Failed to export PDF: ${result.error}`, 'error');
+                    }
+                } catch (err) {
+                    console.error('Electron PDF export error:', err);
+                    showToast(`Export error: ${err.message}`, 'error');
+                } finally {
+                    document.title = originalTitle;
+                    if (wrapper) wrapper.style.transform = originalTransform;
+                    autoFitZoom();
+                }
+                return;
+            }
 
             window.print();
 
@@ -1580,6 +1632,227 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     }
     window.changeHistoryPage = changeHistoryPage;
+
+    /* ---------------- Multi-Select & 3-Dot Menus ---------------- */
+
+    const selectedInvoiceIds = new Set();
+
+    window.closeAllRowMenus = () => {
+        document.querySelectorAll('.action-menu-wrap.open').forEach(w => {
+            w.classList.remove('open', 'open-up');
+            w.closest('.invoice-row-card, .client-card')?.classList.remove('row-menu-open');
+        });
+    };
+
+    window.toggleRowMenu = (btn, event) => {
+        if (event) {
+            event.stopPropagation();
+            event.preventDefault();
+        }
+        const wrap = btn.closest('.action-menu-wrap');
+        if (!wrap) return;
+        const isAlreadyOpen = wrap.classList.contains('open');
+
+        window.closeAllRowMenus();
+
+        if (!isAlreadyOpen) {
+            const rect = btn.getBoundingClientRect();
+            const spaceBelow = window.innerHeight - rect.bottom;
+            const spaceAbove = rect.top;
+            if (spaceBelow < 200 && spaceAbove > spaceBelow) {
+                wrap.classList.add('open-up');
+            } else {
+                wrap.classList.remove('open-up');
+            }
+            wrap.classList.add('open');
+            wrap.closest('.invoice-row-card, .client-card')?.classList.add('row-menu-open');
+        }
+    };
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.action-menu-wrap')) {
+            window.closeAllRowMenus();
+        }
+    });
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            window.closeAllRowMenus();
+        }
+    });
+
+    window.updateBulkBarState = () => {
+        const bulkBar = document.getElementById('history-bulk-bar');
+        const bulkCount = document.getElementById('bulk-selected-count');
+        const bulkSelectAll = document.getElementById('bulk-select-all');
+
+        const totalSelected = selectedInvoiceIds.size;
+
+        if (bulkBar && bulkCount) {
+            if (totalSelected > 0) {
+                bulkCount.textContent = `${totalSelected} selected`;
+                bulkBar.classList.remove('hidden');
+            } else {
+                bulkBar.classList.add('hidden');
+            }
+        }
+
+        if (bulkSelectAll) {
+            const visibleCheckboxes = document.querySelectorAll('.inv-row-checkbox');
+            if (visibleCheckboxes.length === 0) {
+                bulkSelectAll.checked = false;
+                bulkSelectAll.indeterminate = false;
+            } else {
+                let checkedCount = 0;
+                visibleCheckboxes.forEach(cb => {
+                    if (cb.checked) checkedCount++;
+                });
+
+                if (checkedCount === visibleCheckboxes.length && visibleCheckboxes.length > 0) {
+                    bulkSelectAll.checked = true;
+                    bulkSelectAll.indeterminate = false;
+                } else if (checkedCount > 0) {
+                    bulkSelectAll.checked = false;
+                    bulkSelectAll.indeterminate = true;
+                } else {
+                    bulkSelectAll.checked = false;
+                    bulkSelectAll.indeterminate = false;
+                }
+            }
+        }
+    };
+
+    window.handleInvoiceCheckChange = (checkbox, id) => {
+        const card = checkbox.closest('.invoice-row-card');
+        if (checkbox.checked) {
+            selectedInvoiceIds.add(id);
+            if (card) card.classList.add('selected');
+        } else {
+            selectedInvoiceIds.delete(id);
+            if (card) card.classList.remove('selected');
+        }
+        window.updateBulkBarState();
+    };
+
+    window.toggleSelectAllInvoices = (masterCheckbox) => {
+        const isChecked = masterCheckbox.checked;
+        const visibleCheckboxes = document.querySelectorAll('.inv-row-checkbox');
+        visibleCheckboxes.forEach(cb => {
+            const id = cb.getAttribute('data-id');
+            cb.checked = isChecked;
+            const card = cb.closest('.invoice-row-card');
+            if (isChecked) {
+                if (id) selectedInvoiceIds.add(id);
+                if (card) card.classList.add('selected');
+            } else {
+                if (id) selectedInvoiceIds.delete(id);
+                if (card) card.classList.remove('selected');
+            }
+        });
+        window.updateBulkBarState();
+    };
+
+    window.clearSelectedInvoices = () => {
+        selectedInvoiceIds.clear();
+        document.querySelectorAll('.inv-row-checkbox').forEach(cb => {
+            cb.checked = false;
+            cb.closest('.invoice-row-card')?.classList.remove('selected');
+        });
+        window.updateBulkBarState();
+    };
+
+    window.bulkDeleteSelectedInvoices = () => {
+        if (selectedInvoiceIds.size === 0) return;
+        const count = selectedInvoiceIds.size;
+        if (!confirm(`Are you sure you want to delete ${count} selected invoice(s)? This action cannot be undone.`)) {
+            return;
+        }
+        selectedInvoiceIds.forEach(id => {
+            InvoiceDB.deleteInvoice(id);
+        });
+        selectedInvoiceIds.clear();
+        updateEarningsDisplay();
+        updateDBBadge();
+        showToast(`Deleted ${count} invoice(s) successfully!`, 'success');
+    };
+
+    window.downloadSingleInvoicePdf = async (id) => {
+        const inv = InvoiceDB.getInvoice(id);
+        if (!inv) {
+            showToast('Invoice not found', 'error');
+            return;
+        }
+        window.loadInvoiceIntoEditor(id, true);
+        setTimeout(() => {
+            triggerPrint();
+        }, 150);
+    };
+
+    window.bulkDownloadSelectedInvoices = async () => {
+        if (selectedInvoiceIds.size === 0) return;
+        const ids = Array.from(selectedInvoiceIds);
+        const invoicesToExport = ids.map(id => InvoiceDB.getInvoice(id)).filter(Boolean);
+        if (invoicesToExport.length === 0) return;
+
+        if (window.electronAPI && typeof window.electronAPI.selectDirectory === 'function') {
+            const dirRes = await window.electronAPI.selectDirectory();
+            if (dirRes.canceled || !dirRes.folderPath) return;
+
+            showToast(`Exporting ${invoicesToExport.length} invoices to folder...`, 'info');
+            let successCount = 0;
+
+            for (const inv of invoicesToExport) {
+                try {
+                    window.loadInvoiceIntoEditor(inv.id, false, true);
+                    await new Promise(r => setTimeout(r, 80));
+
+                    const element = document.getElementById('invoice-preview');
+                    const exactHeight = Math.ceil(element.getBoundingClientRect().height);
+                    const width = 1080;
+
+                    let styleTag = document.getElementById('dynamic-print-settings');
+                    if (!styleTag) {
+                        styleTag = document.createElement('style');
+                        styleTag.id = 'dynamic-print-settings';
+                        document.head.appendChild(styleTag);
+                    }
+                    styleTag.innerHTML = `
+                        @media print {
+                            @page { size: ${width}px ${exactHeight}px; margin: 0 !important; }
+                            html, body, .invoice-paper {
+                                width: ${width}px !important;
+                                height: ${exactHeight}px !important;
+                                margin: 0 !important;
+                                overflow: hidden !important;
+                            }
+                        }
+                    `;
+
+                    const bufRes = await window.electronAPI.exportPdfBuffer({ width, height: exactHeight });
+                    if (bufRes && bufRes.success && bufRes.data) {
+                        const fname = `Invoice-${inv.invoiceNumber || inv.id}.pdf`;
+                        await window.electronAPI.saveFileToPath({
+                            folderPath: dirRes.folderPath,
+                            filename: fname,
+                            buffer: bufRes.data
+                        });
+                        successCount++;
+                    }
+                } catch (err) {
+                    console.error('Error exporting invoice', inv.id, err);
+                }
+            }
+            showToast(`Successfully saved ${successCount} invoice(s) to folder!`, 'success');
+        } else {
+            showToast(`Downloading ${invoicesToExport.length} invoices...`, 'info');
+            for (const inv of invoicesToExport) {
+                window.loadInvoiceIntoEditor(inv.id, true, true);
+                await new Promise(r => setTimeout(r, 200));
+                await triggerPrint();
+                await new Promise(r => setTimeout(r, 500));
+            }
+        }
+    };
 
     function updateEarningsDisplay() {
         const invoices = InvoiceDB.getInvoices();
@@ -1666,12 +1939,17 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const status = inv.status || 'Pending';
                     const total = inv.total || 0;
                     const itemCount = (inv.items && Array.isArray(inv.items)) ? inv.items.length : 0;
+                    const isChecked = selectedInvoiceIds.has(inv.id);
 
                     const card = document.createElement('div');
-                    card.className = 'invoice-row-card';
+                    card.className = `invoice-row-card${isChecked ? ' selected' : ''}`;
                     card.setAttribute('data-id', inv.id);
                     card.innerHTML = `
                         <div class="inv-card-left">
+                            <label class="inv-checkbox-wrap" onclick="event.stopPropagation()" title="Select invoice">
+                                <input type="checkbox" class="inv-row-checkbox" data-id="${inv.id}" ${isChecked ? 'checked' : ''} onchange="handleInvoiceCheckChange(this, '${inv.id}')">
+                                <span class="inv-checkbox-custom"></span>
+                            </label>
                             <div class="inv-number-badge">#${inv.invoiceNumber}</div>
                             <div class="inv-info-col">
                                 <div class="inv-client-name" title="${escapeHtml(clientName)}">${escapeHtml(clientName)}</div>
@@ -1694,9 +1972,30 @@ document.addEventListener('DOMContentLoaded', async () => {
                                 </select>
                             </div>
                             <div class="inv-actions-col">
-                                <button class="action-icon-btn" onclick="loadInvoiceIntoEditor('${inv.id}')" title="Edit in invoice maker"><i class="ph ph-pencil-simple"></i></button>
-                                <button class="action-icon-btn" onclick="duplicateInvoice('${inv.id}')" title="Duplicate invoice"><i class="ph ph-copy"></i></button>
-                                <button class="action-icon-btn delete-btn" onclick="deleteInvoiceHandler('${inv.id}')" title="Delete invoice"><i class="ph ph-trash"></i></button>
+                                <div class="action-menu-wrap">
+                                    <button type="button" class="action-menu-trigger" onclick="toggleRowMenu(this, event)" title="Invoice actions" aria-label="Invoice actions">
+                                        <i class="ph ph-dots-three-vertical"></i>
+                                    </button>
+                                    <div class="action-menu-dropdown" onclick="event.stopPropagation()">
+                                        <button type="button" class="menu-action-item" onclick="loadInvoiceIntoEditor('${inv.id}'); closeAllRowMenus();">
+                                            <i class="ph ph-pencil-simple"></i>
+                                            <span>Edit Invoice</span>
+                                        </button>
+                                        <button type="button" class="menu-action-item" onclick="downloadSingleInvoicePdf('${inv.id}'); closeAllRowMenus();">
+                                            <i class="ph ph-download-simple"></i>
+                                            <span>Download PDF</span>
+                                        </button>
+                                        <button type="button" class="menu-action-item" onclick="duplicateInvoice('${inv.id}'); closeAllRowMenus();">
+                                            <i class="ph ph-copy"></i>
+                                            <span>Duplicate</span>
+                                        </button>
+                                        <div class="menu-separator"></div>
+                                        <button type="button" class="menu-action-item danger" onclick="deleteInvoiceHandler('${inv.id}'); closeAllRowMenus();">
+                                            <i class="ph ph-trash"></i>
+                                            <span>Delete</span>
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     `;
@@ -1705,6 +2004,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 });
             }
         }
+
+        window.updateBulkBarState();
 
         // Render Pagination Controls
         if (historyPagination) {
@@ -2209,9 +2510,6 @@ document.addEventListener('DOMContentLoaded', async () => {
                 if (parentRow) {
                     parentRow.classList.remove('cs-card-open', 'cs-row-open');
                 }
-                dropdown.classList.remove('cs-drop-up');
-                trigger.setAttribute('aria-expanded', 'false');
-            }
                 dropdown.classList.remove('cs-drop-up');
                 trigger.setAttribute('aria-expanded', 'false');
             }
