@@ -1,0 +1,181 @@
+/* 100% Offline Local Phosphor SVG Icons - Zero Webfonts Needed */
+.ph {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.15em;
+  line-height: 1;
+  background-color: currentColor;
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  mask-position: center;
+  -webkit-mask-size: contain;
+  mask-size: contain;
+  box-sizing: content-box;
+}
+
+.ph-plus {
+  -webkit-mask-image: url('plus.svg');
+  mask-image: url('plus.svg');
+}
+.ph-chart-bar {
+  -webkit-mask-image: url('chart-bar.svg');
+  mask-image: url('chart-bar.svg');
+}
+.ph-users {
+  -webkit-mask-image: url('users.svg');
+  mask-image: url('users.svg');
+}
+.ph-gear {
+  -webkit-mask-image: url('gear.svg');
+  mask-image: url('gear.svg');
+}
+.ph-floppy-disk {
+  -webkit-mask-image: url('floppy-disk.svg');
+  mask-image: url('floppy-disk.svg');
+}
+.ph-file-pdf {
+  -webkit-mask-image: url('file-pdf.svg');
+  mask-image: url('file-pdf.svg');
+}
+.ph-calendar-blank {
+  -webkit-mask-image: url('calendar-blank.svg');
+  mask-image: url('calendar-blank.svg');
+}
+.ph-caret-left {
+  -webkit-mask-image: url('caret-left.svg');
+  mask-image: url('caret-left.svg');
+}
+.ph-caret-right {
+  -webkit-mask-image: url('caret-right.svg');
+  mask-image: url('caret-right.svg');
+}
+.ph-x {
+  -webkit-mask-image: url('x.svg');
+  mask-image: url('x.svg');
+}
+.ph-minus {
+  -webkit-mask-image: url('minus.svg');
+  mask-image: url('minus.svg');
+}
+.ph-corners-out {
+  -webkit-mask-image: url('corners-out.svg');
+  mask-image: url('corners-out.svg');
+}
+.ph-magnifying-glass {
+  -webkit-mask-image: url('magnifying-glass.svg');
+  mask-image: url('magnifying-glass.svg');
+}
+.ph-file-csv {
+  -webkit-mask-image: url('file-csv.svg');
+  mask-image: url('file-csv.svg');
+}
+.ph-file-code {
+  -webkit-mask-image: url('file-code.svg');
+  mask-image: url('file-code.svg');
+}
+.ph-download-simple {
+  -webkit-mask-image: url('download-simple.svg');
+  mask-image: url('download-simple.svg');
+}
+.ph-trash {
+  -webkit-mask-image: url('trash.svg');
+  mask-image: url('trash.svg');
+}
+.ph-user-plus {
+  -webkit-mask-image: url('user-plus.svg');
+  mask-image: url('user-plus.svg');
+}
+.ph-image {
+  -webkit-mask-image: url('image.svg');
+  mask-image: url('image.svg');
+}
+.ph-upload-simple {
+  -webkit-mask-image: url('upload-simple.svg');
+  mask-image: url('upload-simple.svg');
+}
+.ph-user {
+  -webkit-mask-image: url('user.svg');
+  mask-image: url('user.svg');
+}
+.ph-currency-dollar {
+  -webkit-mask-image: url('currency-dollar.svg');
+  mask-image: url('currency-dollar.svg');
+}
+.ph-credit-card {
+  -webkit-mask-image: url('credit-card.svg');
+  mask-image: url('credit-card.svg');
+}
+.ph-bank {
+  -webkit-mask-image: url('bank.svg');
+  mask-image: url('bank.svg');
+}
+.ph-shield-check {
+  -webkit-mask-image: url('shield-check.svg');
+  mask-image: url('shield-check.svg');
+}
+.ph-eye {
+  -webkit-mask-image: url('eye.svg');
+  mask-image: url('eye.svg');
+}
+.ph-eye-slash {
+  -webkit-mask-image: url('eye-slash.svg');
+  mask-image: url('eye-slash.svg');
+}
+.ph-check-circle {
+  -webkit-mask-image: url('check-circle.svg');
+  mask-image: url('check-circle.svg');
+}
+.ph-database {
+  -webkit-mask-image: url('database.svg');
+  mask-image: url('database.svg');
+}
+.ph-info {
+  -webkit-mask-image: url('info.svg');
+  mask-image: url('info.svg');
+}
+.ph-warning {
+  -webkit-mask-image: url('warning.svg');
+  mask-image: url('warning.svg');
+}
+.ph-warning-circle {
+  -webkit-mask-image: url('warning-circle.svg');
+  mask-image: url('warning-circle.svg');
+}
+.ph-x-circle {
+  -webkit-mask-image: url('x-circle.svg');
+  mask-image: url('x-circle.svg');
+}
+.ph-receipt {
+  -webkit-mask-image: url('receipt.svg');
+  mask-image: url('receipt.svg');
+}
+.ph-envelope-simple {
+  -webkit-mask-image: url('envelope-simple.svg');
+  mask-image: url('envelope-simple.svg');
+}
+.ph-map-pin {
+  -webkit-mask-image: url('map-pin.svg');
+  mask-image: url('map-pin.svg');
+}
+.ph-phone {
+  -webkit-mask-image: url('phone.svg');
+  mask-image: url('phone.svg');
+}
+.ph-note {
+  -webkit-mask-image: url('note.svg');
+  mask-image: url('note.svg');
+}
+.ph-arrow-square-in {
+  -webkit-mask-image: url('arrow-square-in.svg');
+  mask-image: url('arrow-square-in.svg');
+}
+.ph-pencil-simple {
+  -webkit-mask-image: url('pencil-simple.svg');
+  mask-image: url('pencil-simple.svg');
+}
+.ph-copy {
+  -webkit-mask-image: url('copy.svg');
+  mask-image: url('copy.svg');
+}

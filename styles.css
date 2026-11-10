@@ -196,6 +196,19 @@ body {
     }
 }
 
+/* Screen reader only utility */
+.sr-only {
+    position: absolute !important;
+    width: 1px !important;
+    height: 1px !important;
+    padding: 0 !important;
+    margin: -1px !important;
+    overflow: hidden !important;
+    clip: rect(0, 0, 0, 0) !important;
+    white-space: nowrap !important;
+    border: 0 !important;
+}
+
 .app-container {
     display: flex;
     flex-direction: column;
@@ -1241,9 +1254,9 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
 }
 
 .nav-tabs-group {
-    display: flex;
-    align-items: stretch;
-    gap: 2px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
     height: 100%;
     background: transparent;
     border: none;
@@ -1252,21 +1265,22 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
 
 .nav-tab-btn {
     position: relative;
-    height: 100%;
-    padding: 0 16px;
+    height: 34px;
+    align-self: center;
+    padding: 0 14px;
     background-color: transparent;
-    border: none;
+    border: 1px solid transparent;
     color: var(--text-dimmed);
-    border-radius: 0;
+    border-radius: 8px;
     font-size: 13px;
     font-weight: 500;
     font-family: var(--font-sans);
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
+    gap: 7px;
     cursor: pointer;
-    transition: color 0.18s ease, background 0.18s ease;
+    transition: all 0.18s ease;
     white-space: nowrap;
     user-select: none;
     box-shadow: none;
@@ -1278,7 +1292,7 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
     line-height: 1;
     margin: 0 !important;
     color: var(--text-dimmed);
-    transition: color 0.18s ease, transform 0.18s ease, filter 0.18s ease;
+    transition: color 0.18s ease;
 }
 
 .nav-tab-btn span {
@@ -1286,11 +1300,8 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
 }
 
 .nav-tab-btn:hover:not(.active) {
-    background: radial-gradient(
-        ellipse 90% 65% at 50% 0%,
-        rgba(var(--color-white-rgb), 0.05) 0%,
-        transparent 100%
-    );
+    background: rgba(255, 255, 255, 0.04);
+    border-color: transparent;
     color: var(--text-white);
 }
 
@@ -1298,42 +1309,37 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
     color: var(--text-white);
 }
 
-.nav-tab-btn.active {
-    background: radial-gradient(
-        ellipse 100% 90% at 50% 0%,
-        rgba(var(--color-brand-rgb), 0.28) 0%,
-        rgba(var(--color-brand-rgb), 0.10) 48%,
-        rgba(var(--color-brand-rgb), 0.02) 80%,
-        transparent 100%
-    );
-    border: none;
-    border-radius: 0;
-    color: var(--color-brand-light);
-    font-weight: 600;
+.nav-tab-btn:focus {
+    outline: none;
     box-shadow: none;
 }
 
+.nav-tab-btn:focus-visible {
+    outline: 2px solid var(--accent-color);
+    outline-offset: 2px;
+}
+
+.nav-tab-btn.active {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #ffffff;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
 .nav-tab-btn.active::before {
-    content: '';
-    position: absolute;
-    top: 0;
-    left: 8px;
-    right: 8px;
-    height: 2.5px;
-    background: var(--color-brand-primary);
-    box-shadow: 0 0 10px rgba(var(--color-brand-rgb), 0.95), 0 2px 6px rgba(var(--color-brand-rgb), 0.7);
-    border-radius: 0 0 3px 3px;
-    z-index: 2;
+    display: none !important;
 }
 
 .nav-tab-btn.active i.ph {
     color: var(--color-brand-primary);
-    filter: drop-shadow(0 0 8px rgba(var(--color-brand-rgb), 0.65));
+    filter: none;
 }
 
 .nav-tab-btn.active span {
-    color: var(--color-brand-light);
-    text-shadow: 0 0 12px rgba(var(--color-brand-rgb), 0.35);
+    color: #ffffff;
+    text-shadow: none;
 }
 
 .topbar-right {
@@ -1415,7 +1421,8 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
 
 .tab-pane.active {
     display: block;
-    animation: tabPaneEnterUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 1;
+    animation: tabPaneEnterUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 #view-invoice.tab-pane.active {
@@ -1424,7 +1431,8 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
     align-items: center;
     padding: 24px 40px 60px;
     box-sizing: border-box;
-    animation: tabPaneEnterUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    opacity: 1;
+    animation: tabPaneEnterUp 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
 .tab-pane.tab-pane-exiting {
@@ -1433,7 +1441,7 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
 }
 
 .tab-pane-page {
-    padding: 28px 36px 60px;
+    padding: 28px 36px 0;
     overflow-y: visible;
     box-sizing: border-box;
 }
@@ -1442,6 +1450,14 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
     max-width: 1060px;
     margin: 0 auto;
     width: 100%;
+    padding-bottom: 72px;
+}
+
+.tab-page-container::after {
+    content: "";
+    display: block;
+    height: 36px;
+    clear: both;
 }
 
 .tab-page-header {
@@ -1553,6 +1569,7 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
 
 .invoice-meta {
     flex: 1;
+    min-width: 0;
     display: flex;
     flex-direction: column;
     gap: 16px;
@@ -1562,9 +1579,10 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
 .invoice-title-row {
     display: flex;
     flex-direction: row;
-    align-items: center;
+    align-items: baseline;
     gap: 16px;
-    white-space: nowrap;
+    flex-wrap: wrap;
+    white-space: normal;
 }
 
 .invoice-title-sep {
@@ -1572,26 +1590,29 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
     font-weight: 400;
     color: var(--primary-color);
     margin-top: -4px;
+    flex-shrink: 0;
     /* Optical alignment */
 }
 
-.invoice-type,
-.client-name-large {
+.invoice-type {
     font-size: 36px;
     font-weight: 400;
     line-height: 36px;
-    /* Updated */
     margin: 0;
-}
-
-.invoice-type {
     color: var(--primary-color);
+    flex-shrink: 0;
 }
 
 .client-name-large {
+    font-size: 36px;
+    font-weight: 400;
+    line-height: 1.15;
+    margin: 0;
     flex: 1;
+    min-width: 0;
     word-wrap: break-word;
     overflow-wrap: break-word;
+    word-break: break-word;
 }
 
 .meta-row {
@@ -2211,13 +2232,103 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
     transform: scale(0.98) !important;
 }
 
-/* Settings 2-Column Side-by-Side Row */
+/* Settings 2-Column Side-by-Side Row & Bordered Cards */
 .settings-row-2col {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 20px;
     align-items: stretch;
-    margin-bottom: 24px;
+    margin-bottom: 28px;
+}
+
+.settings-card-bordered {
+    background: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md, 10px);
+    padding: 20px 22px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    box-sizing: border-box;
+    height: 100%;
+    transition: border-color 0.2s ease;
+}
+
+.settings-card-bordered:hover {
+    border-color: rgba(var(--color-white-rgb), 0.16);
+}
+
+.settings-card-bordered .settings-card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.settings-card-bordered h3 {
+    margin: 0;
+    font-size: 13.5px;
+    font-weight: 600;
+    text-transform: uppercase;
+    color: var(--text-dimmed);
+    letter-spacing: 0.05em;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.settings-card-bordered .settings-card-desc {
+    font-size: 12.5px;
+    color: var(--text-muted);
+    line-height: 1.5;
+    margin: 0 0 16px 0;
+}
+
+.settings-card-bordered .logo-upload-inner {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: auto;
+}
+
+.settings-card-bordered .logo-preview-box {
+    width: 80px;
+    height: 80px;
+    min-width: 80px;
+    background: var(--color-neutral-950);
+    border: 1px dashed var(--color-neutral-710);
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.settings-card-bordered .logo-preview-box img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.settings-card-bordered .upload-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    flex: 1;
+}
+
+.settings-card-bordered .upload-controls button {
+    width: 100%;
+    justify-content: center;
+}
+
+.settings-card-bordered .settings-card-body {
+    margin-top: auto;
+}
+
+.settings-card-bordered .password-input-wrapper {
+    position: relative;
+    width: 100%;
 }
 
 .settings-row-2col .settings-section {
@@ -2260,6 +2371,92 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
     box-shadow: 0 0 0 3px rgba(var(--color-brand-rgb), 0.15);
 }
 
+/* Password Input with Show/Hide Eye Toggle */
+.password-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+    width: 100%;
+}
+
+.password-input-wrapper input {
+    width: 100%;
+    height: 42px;
+    min-height: 42px;
+    padding-left: 14px;
+    padding-right: 44px !important;
+    font-family: var(--font-sans);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.password-input-wrapper input[type="password"] {
+    letter-spacing: 0.28em;
+    font-size: 15px;
+}
+
+.password-input-wrapper input::placeholder {
+    letter-spacing: normal !important;
+    font-size: 13px;
+    font-weight: normal;
+    font-family: var(--font-sans);
+}
+
+.password-toggle-btn {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 30px;
+    height: 30px;
+    border-radius: 6px;
+    background: transparent;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    -webkit-appearance: none;
+    -webkit-tap-highlight-color: transparent;
+    color: var(--text-dimmed);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease;
+    padding: 0;
+    margin: 0;
+    user-select: none;
+    z-index: 2;
+}
+
+.password-toggle-btn:hover {
+    color: var(--text-white);
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.password-toggle-btn:focus,
+.password-toggle-btn:focus-visible,
+.password-toggle-btn:active {
+    outline: none !important;
+    box-shadow: none !important;
+    border: none !important;
+}
+
+.password-toggle-btn i.ph {
+    font-size: 18px;
+    line-height: 1;
+    margin: 0 !important;
+    margin-right: 0 !important;
+    padding: 0 !important;
+    vertical-align: middle !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    pointer-events: none;
+}
+
 /* Danger Zone Single Row */
 .danger-zone-row {
     display: flex;
@@ -2269,6 +2466,7 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
     border-top: 1px solid var(--border-subtle);
     padding-top: 20px;
     margin-top: 10px;
+    margin-bottom: 24px;
 }
 
 .danger-zone-text h3 {
@@ -2509,7 +2707,6 @@ input[type="checkbox"]:checked::before {
     margin-bottom: 12px;
     padding: 0 2px;
     gap: 12px;
-    flex-wrap: wrap;
 }
 
 .history-list-header-left {
@@ -2518,25 +2715,51 @@ input[type="checkbox"]:checked::before {
     gap: 10px;
 }
 
-/* Bulk Action Bar */
+.history-header-info {
+    font-size: 12.5px;
+    color: var(--text-dimmed);
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.history-header-info strong {
+    color: var(--text-white);
+    font-weight: 600;
+}
+
+/* Floating Bulk Action Bar (Bottom-Centered) */
 .history-bulk-bar {
+    position: fixed;
+    bottom: 28px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 200;
     display: flex;
     align-items: center;
     gap: 14px;
-    background: var(--bg-surface);
-    border: 1px solid rgba(var(--color-brand-rgb), 0.35);
-    border-radius: 8px;
-    padding: 6px 14px;
-    animation: bulkBarSlide 0.18s ease-out;
+    background: #1c1c1f;
+    border: 1px solid rgba(var(--color-brand-rgb), 0.5);
+    border-radius: 50px;
+    padding: 8px 12px 8px 18px;
+    box-shadow: 0 16px 36px rgba(var(--color-black-rgb), 0.8), 0 2px 10px rgba(var(--color-black-rgb), 0.4);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    animation: bulkBarFloatUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .history-bulk-bar.hidden {
     display: none !important;
 }
 
-@keyframes bulkBarSlide {
-    from { opacity: 0; transform: translateY(-4px); }
-    to { opacity: 1; transform: translateY(0); }
+@keyframes bulkBarFloatUp {
+    from {
+        opacity: 0;
+        transform: translate(-50%, 14px) scale(0.96);
+    }
+    to {
+        opacity: 1;
+        transform: translate(-50%, 0) scale(1);
+    }
 }
 
 .bulk-bar-left {
@@ -2546,7 +2769,7 @@ input[type="checkbox"]:checked::before {
 }
 
 .bulk-selected-text {
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 600;
     color: var(--text-white);
     white-space: nowrap;
@@ -2555,17 +2778,17 @@ input[type="checkbox"]:checked::before {
 .bulk-bar-actions {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 }
 
 .bulk-action-btn {
     display: inline-flex;
     align-items: center;
     gap: 6px;
-    height: 30px;
-    padding: 0 10px;
-    border-radius: 6px;
-    font-size: 12px;
+    height: 32px;
+    padding: 0 13px;
+    border-radius: 50px;
+    font-size: 12.5px;
     font-weight: 500;
     cursor: pointer;
     background: var(--bg-surface-hover);
@@ -2576,8 +2799,8 @@ input[type="checkbox"]:checked::before {
 }
 
 .bulk-action-btn:hover {
-    background: var(--bg-app);
-    border-color: rgba(var(--color-white-rgb), 0.25);
+    background: var(--bg-surface);
+    border-color: rgba(var(--color-white-rgb), 0.3);
 }
 
 .bulk-action-btn.bulk-delete-btn {
@@ -2591,24 +2814,44 @@ input[type="checkbox"]:checked::before {
     border-color: #ef4444;
 }
 
+.bulk-bar-divider {
+    width: 1px;
+    height: 18px;
+    background: var(--border-subtle);
+    margin: 0 2px;
+}
+
 .bulk-cancel-btn {
-    width: 28px;
-    height: 28px;
-    border-radius: 6px;
-    background: transparent;
-    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.08);
     color: var(--text-dimmed);
     display: inline-flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.15s ease;
-    font-size: 15px;
+    padding: 0;
+    margin: 0;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    line-height: 0;
 }
 
 .bulk-cancel-btn:hover {
     color: var(--text-white);
-    background: var(--bg-surface-hover);
+    background: rgba(255, 255, 255, 0.14);
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+.bulk-cancel-btn svg {
+    display: block;
+    width: 12px;
+    height: 12px;
+    margin: auto;
+    pointer-events: none;
 }
 
 /* Custom Row Checkbox */
@@ -2640,10 +2883,11 @@ input[type="checkbox"]:checked::before {
     border-radius: 4px;
     border: 1.5px solid var(--border-subtle);
     background: var(--bg-surface);
-    display: flex;
+    display: inline-flex;
     align-items: center;
     justify-content: center;
     transition: all 0.15s ease;
+    box-sizing: border-box;
 }
 
 .inv-checkbox-wrap:hover .inv-checkbox-custom {
@@ -2651,18 +2895,26 @@ input[type="checkbox"]:checked::before {
 }
 
 .inv-checkbox-wrap input[type="checkbox"]:checked ~ .inv-checkbox-custom {
-    background: var(--color-brand-primary);
+    background-color: var(--color-brand-primary);
     border-color: var(--color-brand-primary);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='3.5 8.5 6.5 11.5 12.5 5.5'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: 13px 13px;
 }
 
-.inv-checkbox-wrap input[type="checkbox"]:checked ~ .inv-checkbox-custom::after {
-    content: '';
-    width: 4px;
-    height: 8px;
-    border: solid #ffffff;
-    border-width: 0 2px 2px 0;
-    transform: rotate(45deg);
-    margin-bottom: 2px;
+.inv-checkbox-wrap input[type="checkbox"]:indeterminate ~ .inv-checkbox-custom {
+    background-color: var(--color-brand-primary);
+    border-color: var(--color-brand-primary);
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='white' stroke-width='2.5' stroke-linecap='round'%3E%3Cline x1='4' y1='8' x2='12' y2='8'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: center center;
+    background-size: 11px 11px;
+}
+
+.inv-checkbox-wrap input[type="checkbox"]:checked ~ .inv-checkbox-custom::after,
+.inv-checkbox-wrap input[type="checkbox"]:indeterminate ~ .inv-checkbox-custom::after {
+    display: none !important;
 }
 
 .history-list-title {
@@ -2825,6 +3077,8 @@ input[type="checkbox"]:checked::before {
     cursor: pointer;
     transition: all 0.15s ease;
     padding: 0;
+    margin: 0;
+    box-sizing: border-box;
 }
 
 .action-menu-trigger:hover,
@@ -2832,6 +3086,15 @@ input[type="checkbox"]:checked::before {
     background: var(--bg-surface-hover);
     color: var(--text-white);
     border-color: rgba(var(--color-brand-rgb), 0.4);
+}
+
+.action-menu-trigger .dots-svg {
+    width: 16px;
+    height: 16px;
+    display: block;
+    margin: auto;
+    pointer-events: none;
+    fill: currentColor;
 }
 
 .action-menu-trigger i.ph {
@@ -2871,7 +3134,7 @@ input[type="checkbox"]:checked::before {
 
 @keyframes menuFadeIn {
     from { transform: translateY(-4px) scale(0.97); }
-    to { transform: translateY(0); }
+    to { transform: translateY(0) scale(1); }
 }
 
 .menu-action-item {
@@ -2952,10 +3215,10 @@ input[type="checkbox"]:checked::before {
 .history-pagination-container {
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    padding: 16px 4px 8px;
-    margin-top: 14px;
-    border-top: 1px solid var(--border-subtle);
+    justify-content: center;
+    padding: 22px 0 10px;
+    margin-top: 4px;
+    border-top: none;
     flex-wrap: wrap;
     gap: 12px;
 }
@@ -3022,6 +3285,9 @@ input[type="checkbox"]:checked::before {
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
+    .settings-row-2col {
+        grid-template-columns: 1fr;
+    }
     .invoice-row-card {
         flex-direction: column;
         align-items: stretch;
@@ -3059,10 +3325,12 @@ input[type="checkbox"]:checked::before {
 
 .data-table tr {
     position: relative;
+    transition: background-color 0.15s ease;
 }
 
 .data-table tr:hover {
     z-index: 2;
+    background-color: rgba(255, 255, 255, 0.02);
 }
 
 .data-table tr:has(.cs-wrapper.open),
@@ -4011,7 +4279,8 @@ button i.ph {
 .text-btn i.ph,
 .delete-history-btn i.ph,
 .delete-client-btn i.ph,
-.cal-nav-btn i.ph {
+.cal-nav-btn i.ph,
+.password-toggle-btn i.ph {
     margin-right: 0;
 }
 
@@ -4072,4 +4341,99 @@ button i.ph {
 
 .shake-error {
     animation: shakeError 0.35s ease-in-out;
+}
+
+/* About Application Section */
+.about-app-card {
+    background: var(--bg-surface);
+    border: 1px solid var(--border-muted);
+    border-radius: 8px;
+    padding: 20px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+}
+
+.about-app-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--border-muted);
+}
+
+.about-app-branding {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+}
+
+.about-app-icon-box {
+    width: 44px;
+    height: 44px;
+    border-radius: 8px;
+    background: rgba(234, 78, 37, 0.12);
+    border: 1px solid rgba(234, 78, 37, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+}
+
+.about-app-logo {
+    width: 30px;
+    height: 30px;
+    object-fit: contain;
+}
+
+.about-app-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: #ffffff;
+    margin: 0 0 2px 0;
+    letter-spacing: -0.2px;
+}
+
+.about-app-subtitle {
+    font-size: 12px;
+    color: #94a3b8;
+    margin: 0;
+}
+
+.about-app-pill {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: rgba(234, 78, 37, 0.14);
+    color: var(--color-brand-primary);
+    border: 1px solid rgba(234, 78, 37, 0.28);
+}
+
+.about-info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px 20px;
+}
+
+.about-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.about-info-label {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: #71717a;
+}
+
+.about-info-val {
+    font-size: 13px;
+    color: #f1f5f9;
+    font-weight: 500;
 }

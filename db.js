@@ -11,40 +11,32 @@ const InvoiceDB = (() => {
     const DATA_KEY = 'main_json_database';
     const MIRROR_KEY = 'jha_invoice_db_mirror';
 
-    // Default template schema for new installations
+    // Default template schema for clean installations and reset
     const DEFAULT_SCHEMA = {
-        version: '2.0',
+        version: '2.1',
         lastUpdated: new Date().toISOString(),
         profile: {
-            firstName: 'Jarif',
-            lastName: 'Hasan',
-            email: 'jarif.hasan@example.com',
-            mobile: '+880 1700-000000',
-            address: 'Dhaka, Bangladesh',
+            firstName: '',
+            lastName: '',
+            email: '',
+            mobile: '',
+            address: '',
             companyLogo: null,
             platforms: [
-                { id: 'platform1', name: 'Payoneer', email: 'jarif.hasan@example.com' },
-                { id: 'platform2', name: 'Wise', email: 'jarif.hasan@example.com' }
+                { id: 'platform1', name: 'Payoneer', email: '' },
+                { id: 'platform2', name: 'Wise', email: '' }
             ],
             bank: {
-                bankName: 'Dhaka Bank',
-                accountNumber: '1234567890',
-                branchName: 'Banani Branch',
-                branchCode: '012',
-                swiftCode: 'DHAKBDDHXXX',
-                routingNo: '085260123'
-            }
+                bankName: '',
+                accountNumber: '',
+                branchName: '',
+                branchCode: '',
+                swiftCode: '',
+                routingNo: ''
+            },
+            pdfPassword: ''
         },
-        clients: [
-            {
-                id: 'client_1',
-                name: 'Acme Corporation',
-                location: 'San Francisco, CA, USA',
-                email: 'billing@acme.example.com',
-                phone: '+1 415-555-0199',
-                notes: 'Payment terms: 14 days'
-            }
-        ],
+        clients: [],
         invoices: [],
         settings: {
             lastInvoiceNumber: '0001',
@@ -729,19 +721,27 @@ const InvoiceDB = (() => {
         },
 
         /**
-         * Reset database to default
+         * Reset database to clean default schema (clears all earning histories, clients, and resets settings)
          */
         async resetDatabase() {
-            const fresh = JSON.parse(JSON.stringify(DEFAULT_SCHEMA));
-            await this.save(fresh);
-            // Clear legacy keys too
+            // 1. Remove legacy localStorage items so migrations won't resurrect them
             try {
                 localStorage.removeItem('companyLogo');
                 localStorage.removeItem('bankDetails');
                 localStorage.removeItem('clientList');
                 localStorage.removeItem('invoiceHistory');
                 localStorage.removeItem('lastInvoiceNumber');
+                localStorage.removeItem('activeInvoiceDraft');
+                localStorage.removeItem('activeClient');
+                localStorage.removeItem(MIRROR_KEY);
             } catch (e) { }
+
+            // 2. Build completely fresh state
+            const fresh = JSON.parse(JSON.stringify(DEFAULT_SCHEMA));
+            fresh.lastUpdated = new Date().toISOString();
+
+            // 3. Persist to storage
+            await this.save(fresh);
             return fresh;
         }
     };

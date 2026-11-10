@@ -1,0 +1,56 @@
+{
+  "name": "jha-invoice-maker",
+  "version": "1.0.0",
+  "description": "JHA Invoice Maker - Standalone Portable Desktop Application",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --win portable",
+    "dist": "electron-builder --win portable"
+  },
+  "build": {
+    "appId": "com.jarifhasan.invoicemaker",
+    "productName": "Invoice Maker",
+    "win": {
+      "target": [
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "jha-icon.png"
+    },
+    "portable": {
+      "artifactName": "Invoice Maker.exe"
+    },
+    "directories": {
+      "output": "dist"
+    },
+    "electronLanguages": [
+      "en-US"
+    ],
+    "files": [
+      "main.js",
+      "preload.js",
+      "index.html",
+      "styles.css",
+      "script.js",
+      "db.js",
+      "pdf-crypto.js",
+      "pdf-encrypt.js",
+      "jha-icon.png",
+      "fonts/**/*"
+    ]
+  },
+  "author": "Jarif Hasan Akash",
+  "license": "ISC",
+  "devDependencies": {
+    "electron": "^45.2.3",
+    "electron-builder": "^26.18.0"
+  },
+  "dependencies": {
+    "@pdfsmaller/pdf-encrypt": "^1.2.0"
+  }
+}

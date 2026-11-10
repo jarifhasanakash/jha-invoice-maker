@@ -24,6 +24,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentZoom = 1.0;
     const DEFAULT_INVOICE_NOTE = 'Please complete your payment within 14 days, your cooperation is greatly appreciated.';
 
+    function escapeHtml(str) {
+        if (!str && str !== 0) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
     // 3. Cache DOM Elements
     const inputs = {
         invoiceNumber: document.getElementById('invoiceNumber'),
@@ -153,7 +163,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         branchCode: document.getElementById('setting-branchCode'),
         swiftCode: document.getElementById('setting-swiftCode'),
         routingNo: document.getElementById('setting-routingNo'),
-        currency: document.getElementById('setting-currency')
+        currency: document.getElementById('setting-currency'),
+        pdfPassword: document.getElementById('setting-pdfPassword')
     };
 
     // Earnings & History elements
@@ -384,15 +395,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         const profile = InvoiceDB.getProfile();
         const fromFullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Jarif Hasan';
         previews.fromName.textContent = fromFullName;
-        previews.fromLocation.textContent = profile.address || '';
-        previews.fromEmail.textContent = profile.email || '';
+        previews.fromLocation.textContent = profile.address || 'Dhaka, Bangladesh';
+        previews.fromEmail.textContent = profile.email || 'jarif.hasan@example.com';
 
         // "To" client information automatically pulled from selected Client
         const toName = currentClient.name || 'Client Name';
         previews.toName.textContent = toName;
         previews.clientNameHeader.textContent = toName;
-        previews.toLocation.textContent = currentClient.location || '';
-        previews.toEmail.textContent = currentClient.email || '';
+        previews.toLocation.textContent = currentClient.location || 'City/State, Country';
+        previews.toEmail.textContent = currentClient.email || 'client@example.com';
 
         // Visibility for party details
         [previews.fromName, previews.fromLocation, previews.fromEmail,
@@ -404,24 +415,31 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Line Items Table
         previews.itemsList.innerHTML = '';
         let total = 0;
+        const curSym = getCurrencySymbol();
         items.forEach(item => {
             total += (item.price || 0);
             const itemDiv = document.createElement('div');
             itemDiv.className = 'item-row-display';
+            const safeDesc = escapeHtml(item.description || '');
+            const safeSub = item.sub ? escapeHtml(item.sub).replace(/\n/g, '<br>') : '';
+            const priceVal = item.price || 0;
+            const isNeg = priceVal < 0;
+            const absPrice = Math.abs(priceVal).toFixed(2);
             itemDiv.innerHTML = `
                 <div class="item-desc-group">
-                    <div class="item-name">${item.description || ''}</div>
-                    <div class="item-link">${item.sub ? item.sub.replace(/\n/g, '<br>') : ''}</div>
+                    <div class="item-name">${safeDesc}</div>
+                    <div class="item-link">${safeSub}</div>
                 </div>
                 <div class="col-divider"></div>
                 <div class="item-price">
-                    <span>${getCurrencySymbol()}</span><span>${(item.price || 0).toFixed(2)}</span>
+                    ${isNeg ? '<span>-</span>' : ''}<span>${curSym}</span><span>${absPrice}</span>
                 </div>
             `;
             previews.itemsList.appendChild(itemDiv);
         });
 
-        previews.total.textContent = total.toFixed(2);
+        const isTotalNeg = total < 0;
+        previews.total.textContent = (isTotalNeg ? '-' : '') + Math.abs(total).toFixed(2);
 
         // Payment Breakdown
         const showAdvance = inputs.toggleAdvance.checked;
@@ -920,7 +938,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
         if (!location) {
-            markInvalid(clientFormLocation, 'Location / City, Country is required.');
+            markInvalid(clientFormLocation, 'Location (City, Country) is required.');
             return;
         }
 
@@ -987,20 +1005,25 @@ document.addEventListener('DOMContentLoaded', async () => {
             const currencyBadge = client.currency && client.currency !== 'USD'
                 ? `<span class="client-currency-badge">${client.currency}</span>`
                 : `<span class="client-currency-badge">USD</span>`;
+            const safeName = escapeHtml(client.name || '');
+            const safeEmail = escapeHtml(client.email || '');
+            const safeLoc = escapeHtml(client.location || '');
+            const safePhone = escapeHtml(client.phone || '');
+            const safeNotes = escapeHtml(client.notes || '');
             card.innerHTML = `
                 <div class="client-card-info">
-                    <h4>${client.name} ${currencyBadge}</h4>
+                    <h4>${safeName} ${currencyBadge}</h4>
                     <div class="client-card-meta">
-                        ${client.email ? `<span><i class="ph ph-envelope-simple"></i> ${client.email}</span>` : ''}
-                        ${client.location ? `<span><i class="ph ph-map-pin"></i> ${client.location}</span>` : ''}
-                        ${client.phone ? `<span><i class="ph ph-phone"></i> ${client.phone}</span>` : ''}
+                        ${client.email ? `<span><i class="ph ph-envelope-simple"></i> ${safeEmail}</span>` : ''}
+                        ${client.location ? `<span><i class="ph ph-map-pin"></i> ${safeLoc}</span>` : ''}
+                        ${client.phone ? `<span><i class="ph ph-phone"></i> ${safePhone}</span>` : ''}
                     </div>
-                    ${client.notes ? `<div class="client-card-notes"><i class="ph ph-note"></i> ${client.notes}</div>` : ''}
+                    ${client.notes ? `<div class="client-card-notes"><i class="ph ph-note"></i> ${safeNotes}</div>` : ''}
                 </div>
                 <div class="client-card-actions">
                     <div class="action-menu-wrap">
                         <button type="button" class="action-menu-trigger" onclick="toggleRowMenu(this, event)" title="Client actions" aria-label="Client actions">
-                            <i class="ph ph-dots-three-vertical"></i>
+                            <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="dots-svg"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg>
                         </button>
                         <div class="action-menu-dropdown" onclick="event.stopPropagation()">
                             <button type="button" class="menu-action-item" onclick="useClientInInvoice('${client.id}'); closeAllRowMenus();">
@@ -1139,12 +1162,22 @@ document.addEventListener('DOMContentLoaded', async () => {
         const settings = InvoiceDB.getSettings();
         const fromFullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Jarif Hasan';
 
+        const curSymbol = getCurrencySymbol();
+        let curCode = 'USD';
+        if (currentClient && currentClient.currency) {
+            curCode = currentClient.currency;
+        } else if (settingInputs.currency) {
+            curCode = settingInputs.currency.value || 'USD';
+        }
+
         const invoiceData = {
             id: currentEditingInvoiceId || `inv_${Date.now()}`,
             invoiceNumber: invNo,
             date: toISODate(inputs.invoiceDate.value),
             dueDate: addDaysToDate(inputs.invoiceDate.value, settings.defaultDueDays || 14),
             status: currentInvoiceStatus || 'Pending',
+            currency: curCode,
+            currencySymbol: curSymbol,
             from: {
                 name: fromFullName,
                 location: profile.address || '',
@@ -1154,7 +1187,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                 id: currentClient.id || null,
                 name: currentClient.name || 'Client Name',
                 location: currentClient.location || '',
-                email: currentClient.email || ''
+                email: currentClient.email || '',
+                currency: curCode,
+                currencySymbol: curSymbol
             },
             items: JSON.parse(JSON.stringify(items)),
             toggleAdvance: inputs.toggleAdvance.checked,
@@ -1220,7 +1255,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         // By default no client will be selected
-        currentClient = { id: null, name: 'Client Name', location: 'City/State, Country', email: 'client@example.com' };
+        const defaultCode = (settingInputs.currency && settingInputs.currency.value) || 'USD';
+        currentClient = {
+            id: null,
+            name: 'Client Name',
+            location: 'City/State, Country',
+            email: 'client@example.com',
+            currency: defaultCode,
+            currencySymbol: getCurrencySymbol()
+        };
         if (inputs.clientSelect) {
             inputs.clientSelect.value = '';
         }
@@ -1388,15 +1431,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         const clientObj = inv.client || inv.to || {};
+        const matchedClient = InvoiceDB.getClients().find(c => (clientObj.id && c.id === clientObj.id) || c.name.toLowerCase() === (clientObj.name || '').toLowerCase());
+        const invCurrency = inv.currency || (matchedClient && matchedClient.currency) || (clientObj && clientObj.currency) || 'USD';
+        const invCurrencySymbol = inv.currencySymbol || (matchedClient && matchedClient.currencySymbol) || (clientObj && clientObj.currencySymbol) || '$';
+
         currentClient = {
             id: clientObj.id || null,
             name: clientObj.name || 'Client Name',
             location: clientObj.location || '',
-            email: clientObj.email || ''
+            email: clientObj.email || '',
+            currency: invCurrency,
+            currencySymbol: invCurrencySymbol
         };
 
         // Match dropdown
-        const matchedClient = InvoiceDB.getClients().find(c => (clientObj.id && c.id === clientObj.id) || c.name.toLowerCase() === (clientObj.name || '').toLowerCase());
         if (matchedClient) {
             inputs.clientSelect.value = matchedClient.id;
         } else {
@@ -1434,13 +1482,18 @@ document.addEventListener('DOMContentLoaded', async () => {
         startNewInvoice();
 
         const clientObj = inv.client || inv.to || {};
+        const matched = InvoiceDB.getClients().find(c => (clientObj.id && c.id === clientObj.id) || c.name.toLowerCase() === (clientObj.name || '').toLowerCase());
+        const invCurrency = inv.currency || (matched && matched.currency) || (clientObj && clientObj.currency) || 'USD';
+        const invCurrencySymbol = inv.currencySymbol || (matched && matched.currencySymbol) || (clientObj && clientObj.currencySymbol) || '$';
+
         currentClient = {
             id: clientObj.id || null,
             name: clientObj.name || 'Client Name',
             location: clientObj.location || '',
-            email: clientObj.email || ''
+            email: clientObj.email || '',
+            currency: invCurrency,
+            currencySymbol: invCurrencySymbol
         };
-        const matched = InvoiceDB.getClients().find(c => (clientObj.id && c.id === clientObj.id) || c.name.toLowerCase() === (clientObj.name || '').toLowerCase());
         if (matched && inputs.clientSelect) {
             inputs.clientSelect.value = matched.id;
         }
@@ -1487,6 +1540,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     /* ---------------- Print Engine (True Vector 1-Page PDF) ---------------- */
 
+    function getActivePdfPassword() {
+        if (settingInputs && settingInputs.pdfPassword && settingInputs.pdfPassword.value) {
+            const val = settingInputs.pdfPassword.value.trim();
+            if (val.length > 0) return val;
+        }
+        if (typeof InvoiceDB !== 'undefined' && InvoiceDB.getProfile) {
+            try {
+                const profile = InvoiceDB.getProfile();
+                if (profile && profile.pdfPassword && profile.pdfPassword.trim().length > 0) {
+                    return profile.pdfPassword.trim();
+                }
+            } catch (e) {}
+        }
+        try {
+            const mirror = localStorage.getItem('jha_invoice_db_mirror');
+            if (mirror) {
+                const parsed = JSON.parse(mirror);
+                if (parsed && parsed.profile && parsed.profile.pdfPassword) {
+                    return parsed.profile.pdfPassword.trim();
+                }
+            }
+        } catch (e) {}
+        return '';
+    }
+
     const triggerPrint = async () => {
         // Ensure invoice editor tab is active before printing
         if (activeTabKey !== 'tab-invoice') {
@@ -1495,12 +1573,12 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Validate client and items before proceeding with save or print
         if (!validateInvoiceReady('downloading')) {
-            return;
+            return false;
         }
 
         // 1. Auto-save current invoice first
         const saved = await saveCurrentInvoice(false);
-        if (!saved) return;
+        if (!saved) return false;
 
         const element = document.getElementById('invoice-preview');
         const wrapper = document.querySelector('.preview-wrapper');
@@ -1509,88 +1587,92 @@ document.addEventListener('DOMContentLoaded', async () => {
         // 2. Temporarily unscale wrapper to measure exact physical dimensions
         if (wrapper) wrapper.style.transform = 'none';
 
-        setTimeout(async () => {
-            // Measure exact physical height (strictly exact, zero extra buffer to eliminate 2nd page)
-            const exactHeight = Math.ceil(element.getBoundingClientRect().height);
-            const width = 1080;
+        await new Promise(r => setTimeout(r, 80));
 
-            const styleId = 'dynamic-print-settings';
-            let styleTag = document.getElementById(styleId);
-            if (!styleTag) {
-                styleTag = document.createElement('style');
-                styleTag.id = styleId;
-                document.head.appendChild(styleTag);
-            }
+        // Measure exact physical height (strictly exact, zero extra buffer to eliminate 2nd page)
+        const exactHeight = Math.ceil(element.getBoundingClientRect().height);
+        const width = 1080;
 
-            styleTag.innerHTML = `
-                @media print {
-                    @page {
-                        size: ${width}px ${exactHeight}px;
-                        margin: 0 !important;
-                    }
-                    html,
-                    body {
-                        width: ${width}px !important;
-                        height: ${exactHeight}px !important;
-                        max-height: ${exactHeight}px !important;
-                        overflow: hidden !important;
-                        margin: 0 !important;
-                        padding: 0 !important;
-                    }
-                    .invoice-paper {
-                        width: ${width}px !important;
-                        height: ${exactHeight}px !important;
-                        max-height: ${exactHeight}px !important;
-                        margin: 0 !important;
-                        overflow: hidden !important;
-                        page-break-inside: avoid !important;
-                        break-inside: avoid !important;
-                        page-break-after: avoid !important;
-                        break-after: avoid !important;
-                    }
+        const styleId = 'dynamic-print-settings';
+        let styleTag = document.getElementById(styleId);
+        if (!styleTag) {
+            styleTag = document.createElement('style');
+            styleTag.id = styleId;
+            document.head.appendChild(styleTag);
+        }
+
+        styleTag.innerHTML = `
+            @media print {
+                @page {
+                    size: ${width}px ${exactHeight}px;
+                    margin: 0 !important;
                 }
-            `;
-
-            const originalTitle = document.title;
-            const invoiceNo = inputs.invoiceNumber.value;
-            document.title = `Invoice - ${invoiceNo}`;
-
-            // Check if running inside Electron Native Desktop App
-            if (window.electronAPI && typeof window.electronAPI.exportPdf === 'function') {
-                showToast(`Generating single-page PDF for Invoice #${invoiceNo}...`, 'info');
-                try {
-                    const result = await window.electronAPI.exportPdf({
-                        filename: `Invoice-${invoiceNo}.pdf`,
-                        width: width,
-                        height: exactHeight
-                    });
-
-                    if (result && result.success) {
-                        showToast(`Invoice #${invoiceNo} saved successfully!`, 'success');
-                    } else if (result && result.canceled) {
-                        // User canceled save dialog - no error needed
-                    } else if (result && result.error) {
-                        showToast(`Failed to export PDF: ${result.error}`, 'error');
-                    }
-                } catch (err) {
-                    console.error('Electron PDF export error:', err);
-                    showToast(`Export error: ${err.message}`, 'error');
-                } finally {
-                    document.title = originalTitle;
-                    if (wrapper) wrapper.style.transform = originalTransform;
-                    autoFitZoom();
+                html,
+                body {
+                    width: ${width}px !important;
+                    height: ${exactHeight}px !important;
+                    max-height: ${exactHeight}px !important;
+                    overflow: hidden !important;
+                    margin: 0 !important;
+                    padding: 0 !important;
                 }
-                return;
+                .invoice-paper {
+                    width: ${width}px !important;
+                    height: ${exactHeight}px !important;
+                    max-height: ${exactHeight}px !important;
+                    margin: 0 !important;
+                    overflow: hidden !important;
+                    page-break-inside: avoid !important;
+                    break-inside: avoid !important;
+                    page-break-after: avoid !important;
+                    break-after: avoid !important;
+                }
             }
+        `;
 
-            window.print();
+        const originalTitle = document.title;
+        const invoiceNo = inputs.invoiceNumber.value;
+        document.title = `Invoice - ${invoiceNo}`;
 
-            document.title = originalTitle;
-            if (wrapper) wrapper.style.transform = originalTransform;
-            autoFitZoom();
+        // Check if running inside Electron Native Desktop App
+        if (window.electronAPI && typeof window.electronAPI.exportPdf === 'function') {
+            showToast(`Generating single-page PDF for Invoice #${invoiceNo}...`, 'info');
+            try {
+                const currentPdfPassword = getActivePdfPassword();
 
-            showToast(`Invoice #${invoiceNo} sent to browser Save as PDF!`, 'success');
-        }, 80);
+                const result = await window.electronAPI.exportPdf({
+                    filename: `Invoice - ${invoiceNo}.pdf`,
+                    width: width,
+                    height: exactHeight,
+                    password: currentPdfPassword
+                });
+
+                if (result && result.success) {
+                    showToast(`Invoice #${invoiceNo} saved successfully!`, 'success');
+                } else if (result && result.canceled) {
+                    // User canceled save dialog - no error needed
+                } else if (result && result.error) {
+                    showToast(`Failed to export PDF: ${result.error}`, 'error');
+                }
+            } catch (err) {
+                console.error('Electron PDF export error:', err);
+                showToast(`Export error: ${err.message}`, 'error');
+            } finally {
+                document.title = originalTitle;
+                if (wrapper) wrapper.style.transform = originalTransform;
+                autoFitZoom();
+            }
+            return true;
+        }
+
+        window.print();
+
+        document.title = originalTitle;
+        if (wrapper) wrapper.style.transform = originalTransform;
+        autoFitZoom();
+
+        showToast(`Invoice #${invoiceNo} sent to browser Save as PDF!`, 'success');
+        return true;
     };
 
     printBtn.addEventListener('click', triggerPrint);
@@ -1782,10 +1864,41 @@ document.addEventListener('DOMContentLoaded', async () => {
             showToast('Invoice not found', 'error');
             return;
         }
-        window.loadInvoiceIntoEditor(id, true);
-        setTimeout(() => {
-            triggerPrint();
-        }, 150);
+
+        const prevTab = activeTabKey;
+        const prevEditingId = currentEditingInvoiceId;
+        const prevItems = JSON.stringify(items);
+        const prevInvNo = inputs.invoiceNumber.value;
+        const prevInvDate = inputs.invoiceDate.value;
+        const prevClient = JSON.stringify(currentClient);
+        const prevClientVal = inputs.clientSelect.value;
+        const prevAdvanceChecked = inputs.toggleAdvance.checked;
+        const prevAdvanceVal = inputs.advanceAmount.value;
+        const prevBalanceChecked = inputs.toggleBalance.checked;
+        const prevNote = inputs.invoiceNote ? inputs.invoiceNote.value : '';
+        const prevStatus = currentInvoiceStatus;
+
+        window.loadInvoiceIntoEditor(id, false, true);
+        await new Promise(r => setTimeout(r, 100));
+
+        await triggerPrint();
+
+        if (prevTab && prevTab !== 'tab-invoice') {
+            switchTab(prevTab);
+            currentEditingInvoiceId = prevEditingId;
+            items = JSON.parse(prevItems);
+            inputs.invoiceNumber.value = prevInvNo;
+            inputs.invoiceDate.value = prevInvDate;
+            currentClient = JSON.parse(prevClient);
+            inputs.clientSelect.value = prevClientVal;
+            inputs.toggleAdvance.checked = prevAdvanceChecked;
+            inputs.advanceAmount.value = prevAdvanceVal;
+            inputs.toggleBalance.checked = prevBalanceChecked;
+            if (inputs.invoiceNote) inputs.invoiceNote.value = prevNote;
+            currentInvoiceStatus = prevStatus;
+            renderItemsInput();
+            updatePreview();
+        }
     };
 
     window.bulkDownloadSelectedInvoices = async () => {
@@ -1828,9 +1941,11 @@ document.addEventListener('DOMContentLoaded', async () => {
                         }
                     `;
 
-                    const bufRes = await window.electronAPI.exportPdfBuffer({ width, height: exactHeight });
+                    const currentPdfPassword = getActivePdfPassword();
+
+                    const bufRes = await window.electronAPI.exportPdfBuffer({ width, height: exactHeight, password: currentPdfPassword });
                     if (bufRes && bufRes.success && bufRes.data) {
-                        const fname = `Invoice-${inv.invoiceNumber || inv.id}.pdf`;
+                        const fname = `Invoice - ${inv.invoiceNumber || inv.id}.pdf`;
                         await window.electronAPI.saveFileToPath({
                             folderPath: dirRes.folderPath,
                             filename: fname,
@@ -1892,12 +2007,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         // Sort descending by date & number
         filtered.sort((a, b) => new Date(b.date) - new Date(a.date) || b.invoiceNumber.localeCompare(a.invoiceNumber));
 
-        // Compute Overview Stats
+        // Compute Overview Stats based on filtered invoices
         let totalInvoiced = 0;
         let totalPaid = 0;
         let totalPending = 0;
 
-        invoices.forEach(i => {
+        filtered.forEach(i => {
             const amt = i.total || 0;
             totalInvoiced += amt;
             const st = (i.status || 'Pending').toLowerCase();
@@ -1905,10 +2020,16 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (st === 'pending' || st === 'overdue') totalPending += amt;
         });
 
-        statTotalInvoiced.textContent = `$${totalInvoiced.toFixed(2)}`;
-        statTotalPaid.textContent = `$${totalPaid.toFixed(2)}`;
-        statTotalPending.textContent = `$${totalPending.toFixed(2)}`;
-        statInvoicesCount.textContent = invoices.length;
+        // Currency symbol for stats
+        const activeSettings = InvoiceDB.getSettings();
+        const settingsSymbol = (settingInputs.currency && settingInputs.currency.options[settingInputs.currency.selectedIndex]?.getAttribute('data-symbol')) || activeSettings.currencySymbol || '$';
+        const distinctCurrencies = new Set(filtered.map(i => i.currencySymbol || '$'));
+        const statsSymbol = (distinctCurrencies.size === 1 && filtered.length > 0) ? Array.from(distinctCurrencies)[0] : settingsSymbol;
+
+        statTotalInvoiced.textContent = `${statsSymbol}${totalInvoiced.toFixed(2)}`;
+        statTotalPaid.textContent = `${statsSymbol}${totalPaid.toFixed(2)}`;
+        statTotalPending.textContent = `${statsSymbol}${totalPending.toFixed(2)}`;
+        statInvoicesCount.textContent = filtered.length;
 
         if (historyTotalCountBadge) {
             historyTotalCountBadge.textContent = `${filtered.length} ${filtered.length === 1 ? 'Invoice' : 'Invoices'}`;
@@ -1940,6 +2061,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const total = inv.total || 0;
                     const itemCount = (inv.items && Array.isArray(inv.items)) ? inv.items.length : 0;
                     const isChecked = selectedInvoiceIds.has(inv.id);
+                    const invSymbol = inv.currencySymbol || (inv.client && inv.client.currencySymbol) || '$';
 
                     const card = document.createElement('div');
                     card.className = `invoice-row-card${isChecked ? ' selected' : ''}`;
@@ -1961,7 +2083,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div class="inv-card-right">
                             <div class="inv-amount-badge">
-                                <span class="inv-amount-val">$${total.toFixed(2)}</span>
+                                <span class="inv-amount-val">${invSymbol}${total.toFixed(2)}</span>
                             </div>
                             <div class="inv-status-col">
                                 <select class="table-status-select" onchange="changeInvoiceStatus('${inv.id}', this.value)">
@@ -1974,7 +2096,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                             <div class="inv-actions-col">
                                 <div class="action-menu-wrap">
                                     <button type="button" class="action-menu-trigger" onclick="toggleRowMenu(this, event)" title="Invoice actions" aria-label="Invoice actions">
-                                        <i class="ph ph-dots-three-vertical"></i>
+                                        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor" class="dots-svg"><circle cx="8" cy="3" r="1.5"/><circle cx="8" cy="8" r="1.5"/><circle cx="8" cy="13" r="1.5"/></svg>
                                     </button>
                                     <div class="action-menu-dropdown" onclick="event.stopPropagation()">
                                         <button type="button" class="menu-action-item" onclick="loadInvoiceIntoEditor('${inv.id}'); closeAllRowMenus();">
@@ -2007,46 +2129,49 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         window.updateBulkBarState();
 
-        // Render Pagination Controls
-        if (historyPagination) {
-            historyPagination.innerHTML = '';
+        // Update Header Showing X-Y of Z Info
+        const historyHeaderInfo = document.getElementById('history-header-info');
+        if (historyHeaderInfo) {
             if (totalItems > 0) {
                 const endIdx = Math.min(startIdx + INVOICES_PER_PAGE, totalItems);
-                let pagHtml = `
-                    <div class="pagination-info">
-                        Showing <strong>${startIdx + 1}–${endIdx}</strong> of <strong>${totalItems}</strong> ${totalItems === 1 ? 'invoice' : 'invoices'}
-                    </div>
+                historyHeaderInfo.innerHTML = `Showing <strong>${startIdx + 1}–${endIdx}</strong> of <strong>${totalItems}</strong> ${totalItems === 1 ? 'invoice' : 'invoices'}`;
+                historyHeaderInfo.style.display = 'block';
+            } else {
+                historyHeaderInfo.innerHTML = '';
+                historyHeaderInfo.style.display = 'none';
+            }
+        }
+
+        // Render Centered Pagination Controls
+        if (historyPagination) {
+            historyPagination.innerHTML = '';
+            if (totalPages > 1) {
+                let pagHtml = `<div class="pagination-nav">`;
+                pagHtml += `
+                    <button class="page-btn page-nav-btn" ${currentHistoryPage === 1 ? 'disabled' : ''} onclick="changeHistoryPage(${currentHistoryPage - 1})" title="Previous Page">
+                        <i class="ph ph-caret-left"></i> Prev
+                    </button>
                 `;
 
-                if (totalPages > 1) {
-                    pagHtml += `<div class="pagination-nav">`;
-                    pagHtml += `
-                        <button class="page-btn page-nav-btn" ${currentHistoryPage === 1 ? 'disabled' : ''} onclick="changeHistoryPage(${currentHistoryPage - 1})" title="Previous Page">
-                            <i class="ph ph-caret-left"></i> Prev
-                        </button>
-                    `;
+                const pageNumbers = getPaginationPages(currentHistoryPage, totalPages);
+                pageNumbers.forEach(p => {
+                    if (p === '...') {
+                        pagHtml += `<span class="page-ellipsis">…</span>`;
+                    } else {
+                        pagHtml += `
+                            <button class="page-btn ${p === currentHistoryPage ? 'active' : ''}" onclick="changeHistoryPage(${p})">
+                                ${p}
+                            </button>
+                        `;
+                    }
+                });
 
-                    const pageNumbers = getPaginationPages(currentHistoryPage, totalPages);
-                    pageNumbers.forEach(p => {
-                        if (p === '...') {
-                            pagHtml += `<span class="page-ellipsis">…</span>`;
-                        } else {
-                            pagHtml += `
-                                <button class="page-btn ${p === currentHistoryPage ? 'active' : ''}" onclick="changeHistoryPage(${p})">
-                                    ${p}
-                                </button>
-                            `;
-                        }
-                    });
-
-                    pagHtml += `
-                        <button class="page-btn page-nav-btn" ${currentHistoryPage === totalPages ? 'disabled' : ''} onclick="changeHistoryPage(${currentHistoryPage + 1})" title="Next Page">
-                            Next <i class="ph ph-caret-right"></i>
-                        </button>
-                    `;
-                    pagHtml += `</div>`;
-                }
-
+                pagHtml += `
+                    <button class="page-btn page-nav-btn" ${currentHistoryPage === totalPages ? 'disabled' : ''} onclick="changeHistoryPage(${currentHistoryPage + 1})" title="Next Page">
+                        Next <i class="ph ph-caret-right"></i>
+                    </button>
+                `;
+                pagHtml += `</div>`;
                 historyPagination.innerHTML = pagHtml;
             }
         }
@@ -2118,6 +2243,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         settingInputs.swiftCode.value = bank.swiftCode || '';
         settingInputs.routingNo.value = bank.routingNo || '';
 
+        if (settingInputs.pdfPassword) {
+            settingInputs.pdfPassword.value = profile.pdfPassword || '';
+        }
+
         if (settingInputs.defaultNote) {
             settingInputs.defaultNote.value = settings.defaultNote || '';
         }
@@ -2135,16 +2264,25 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     function syncProfileToPreviewsAndDefaults() {
         const profile = InvoiceDB.getProfile();
+        const hasCustomProfile = Boolean(profile.firstName || profile.lastName || profile.address || profile.email);
         const fullName = `${profile.firstName || ''} ${profile.lastName || ''}`.trim() || 'Jarif Hasan';
 
         // From details in preview
         if (previews.fromName) previews.fromName.textContent = fullName;
-        if (previews.fromLocation) previews.fromLocation.textContent = profile.address || '';
-        if (previews.fromEmail) previews.fromEmail.textContent = profile.email || '';
+        if (previews.fromLocation) previews.fromLocation.textContent = profile.address || (hasCustomProfile ? '' : 'Dhaka, Bangladesh');
+        if (previews.fromEmail) previews.fromEmail.textContent = profile.email || (hasCustomProfile ? '' : 'jarif.hasan@example.com');
+
+        // Update visibility
+        [previews.fromName, previews.fromLocation, previews.fromEmail].forEach(el => {
+            if (el) {
+                if (el.textContent.trim() === '') el.classList.add('hidden');
+                else el.classList.remove('hidden');
+            }
+        });
 
         // Preview Signature
         if (previews.signatureName) previews.signatureName.textContent = fullName;
-        if (previews.mobile) previews.mobile.textContent = profile.mobile || '';
+        if (previews.mobile) previews.mobile.textContent = profile.mobile || (hasCustomProfile ? '' : '+880 1700-000000');
 
         // Platforms
         const p1 = profile.platforms?.[0] || { name: '', email: '' };
@@ -2240,6 +2378,10 @@ document.addEventListener('DOMContentLoaded', async () => {
         profile.bank.swiftCode = settingInputs.swiftCode ? settingInputs.swiftCode.value.trim() : '';
         profile.bank.routingNo = settingInputs.routingNo ? settingInputs.routingNo.value.trim() : '';
 
+        if (settingInputs.pdfPassword) {
+            profile.pdfPassword = settingInputs.pdfPassword.value;
+        }
+
         if (settingInputs.defaultNote) {
             settings.defaultNote = settingInputs.defaultNote.value;
         }
@@ -2257,12 +2399,43 @@ document.addEventListener('DOMContentLoaded', async () => {
         updateDBBadge();
 
         if (notify) {
-            showToast('Profile & bank details saved successfully!', 'success');
+            showToast('Settings, profile & PDF password saved successfully!', 'success');
         }
     }
 
+    // PDF Password Show / Hide Eye Toggle
+    const togglePdfPasswordBtn = document.getElementById('toggle-pdf-password-btn');
+    if (togglePdfPasswordBtn && settingInputs.pdfPassword) {
+        togglePdfPasswordBtn.addEventListener('mousedown', (e) => {
+            e.preventDefault(); // Keep input focused and prevent button focus ring
+        });
+        togglePdfPasswordBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isPassword = settingInputs.pdfPassword.type === 'password';
+            settingInputs.pdfPassword.type = isPassword ? 'text' : 'password';
+            const icon = togglePdfPasswordBtn.querySelector('i');
+            if (icon) {
+                icon.className = isPassword ? 'ph ph-eye-slash' : 'ph ph-eye';
+            }
+        });
+    }
+
+    // Auto-sync PDF password as user types to ensure export never misses it
+    if (settingInputs.pdfPassword) {
+        settingInputs.pdfPassword.addEventListener('input', () => {
+            const pwd = settingInputs.pdfPassword.value;
+            if (typeof InvoiceDB !== 'undefined') {
+                const data = InvoiceDB.getData();
+                if (data && data.profile) {
+                    data.profile.pdfPassword = pwd;
+                    InvoiceDB.save(data).catch(() => {});
+                }
+            }
+        });
+    }
+
     // Auto-save is TURNED OFF for Settings inputs per user request.
-    // Inputs ONLY save when the user explicitly clicks "Save Profile & Bank Details".
+    // Inputs ONLY save when the user explicitly clicks "Save Profile & Settings".
     const saveSettingsBtn = document.getElementById('save-settings-btn');
     if (saveSettingsBtn) {
         saveSettingsBtn.addEventListener('click', () => {
@@ -2372,12 +2545,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     resetDataBtn.addEventListener('click', async () => {
-        const confirmed = confirm('WARNING: Are you sure you want to delete all data? This will clear all clients, invoices, profile settings and database records.');
+        const confirmed = confirm('WARNING: Are you sure you want to delete all data?\n\nThis will permanently delete all invoice history, all clients, and reset all settings to defaults.');
         if (confirmed) {
-            const doubleCheck = prompt('Type "DELETE" to confirm permanent deletion of all data:');
-            if (doubleCheck && doubleCheck.trim().toUpperCase() === 'DELETE') {
+            try {
                 await InvoiceDB.resetDatabase();
+                sessionStorage.clear();
                 location.reload();
+            } catch (err) {
+                console.error('Error resetting database:', err);
+                alert('Failed to reset data: ' + err.message);
             }
         }
     });
