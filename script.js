@@ -1665,6 +1665,105 @@ document.addEventListener('DOMContentLoaded', async () => {
             return true;
         }
 
+        // Web Edition (Browser / Tablet / Mobile): Direct 1-Page Custom-Dimension PDF Download
+        // Strictly follows the invoice content dimensions (no Letter/A4 format, zero top/bottom borders)
+        if (typeof html2pdf !== 'undefined') {
+            showToast(`Generating PDF for Invoice #${invoiceNo}...`, 'info');
+
+            const clone = element.cloneNode(true);
+            clone.id = 'invoice-preview-print-clone';
+            clone.style.cssText = 'position: fixed !important; left: 0 !important; top: 0 !important; width: 1080px !important; min-width: 1080px !important; max-width: 1080px !important; height: auto !important; margin: 0 !important; padding: 0 !important; transform: none !important; box-shadow: none !important; z-index: 999999 !important; background: #ffffff !important;';
+
+            document.body.appendChild(clone);
+            await new Promise(r => setTimeout(r, 120));
+
+            const measuredHeight = Math.ceil(clone.getBoundingClientRect().height);
+            const exportWidth = 1080;
+
+            const opt = {
+                margin: 0,
+                filename: `Invoice - ${invoiceNo}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    width: exportWidth,
+                    height: measuredHeight,
+                    windowWidth: exportWidth,
+                    x: 0,
+                    y: 0,
+                    scrollX: 0,
+                    scrollY: 0
+                },
+                jsPDF: {
+                    unit: 'px',
+                    format: [exportWidth, measuredHeight],
+                    orientation: 'portrait',
+                    hotfixes: ['px_scaling']
+                },
+                pagebreak: { mode: 'avoid-all' }
+            };
+
+            try {
+                const pdfObj = await html2pdf().set(opt).from(clone).toPdf().get('pdf');
+                while (pdfObj.internal.getNumberOfPages() > 1) {
+                    pdfObj.deletePage(pdfObj.internal.getNumberOfPages());
+                }
+
+                const pdfBlob = pdfObj.output('blob');
+                const filename = `Invoice - ${invoiceNo}.pdf`;
+
+                // iOS Safari Web Share support (allows direct Save to Files)
+                const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+                let savedDirectly = false;
+
+                if (isIOS && navigator.canShare) {
+                    try {
+                        const file = new File([pdfBlob], filename, { type: 'application/pdf' });
+                        if (navigator.canShare({ files: [file] })) {
+                            await navigator.share({
+                                files: [file],
+                                title: filename
+                            });
+                            savedDirectly = true;
+                            showToast(`Invoice #${invoiceNo} ready!`, 'success');
+                        }
+                    } catch (shareErr) {
+                        if (shareErr.name === 'AbortError') savedDirectly = true;
+                    }
+                }
+
+                // Android tablet, phone, desktop browser: Direct binary file download (no print dialog, no letter/A4 options)
+                if (!savedDirectly) {
+                    const blobUrl = URL.createObjectURL(pdfBlob);
+                    const link = document.createElement('a');
+                    link.href = blobUrl;
+                    link.download = filename;
+                    document.body.appendChild(link);
+                    link.click();
+                    setTimeout(() => {
+                        if (document.body.contains(link)) document.body.removeChild(link);
+                        URL.revokeObjectURL(blobUrl);
+                    }, 1500);
+
+                    showToast(`Invoice #${invoiceNo} downloaded!`, 'success');
+                }
+            } catch (pdfErr) {
+                console.error('Web PDF export error:', pdfErr);
+                showToast(`Failed to generate PDF: ${pdfErr.message || pdfErr}`, 'error');
+            } finally {
+                if (document.body.contains(clone)) {
+                    document.body.removeChild(clone);
+                }
+                document.title = originalTitle;
+                if (wrapper) wrapper.style.transform = originalTransform;
+                autoFitZoom();
+            }
+            return true;
+        }
+
+        // Fallback for browsers if html2pdf not available
         window.print();
 
         document.title = originalTitle;
