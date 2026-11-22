@@ -1549,6 +1549,23 @@ input[type="date"]::-webkit-datetime-edit-year-field:focus {
     }
 }
 
+/* Rust engine preview (canvas). The HTML paper stays as a fallback. */
+.invoice-preview-canvas {
+    display: none;
+    width: 1080px;
+    box-shadow: 0 4px 30px rgba(var(--color-black-rgb), 0.5);
+    margin-bottom: 40px;
+    flex-shrink: 0;
+}
+
+.invoice-preview-canvas.ready {
+    display: block;
+}
+
+#invoice-preview.engine-preview-active {
+    display: none !important;
+}
+
 /* Invoice Inner Layout */
 .invoice-header {
     display: flex;
@@ -4443,6 +4460,190 @@ button i.ph {
 }
 
 /* ========================================================
+   Desktop-app parity (the native app is the reference design)
+   ======================================================== */
+
+/* Line item fields: one-line description, 3-line sub-detail, no resize grips */
+.item-row textarea {
+    resize: none;
+    line-height: 1.55;
+}
+
+.item-row textarea.item-desc-input {
+    height: 42px;
+    min-height: 42px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+    overflow: hidden;
+    font-weight: 500;
+}
+
+.item-row textarea.item-sub-input {
+    min-height: 79px;
+    font-size: 12.5px;
+    color: var(--text-muted);
+}
+
+/* History: one-line invoice cards */
+.inv-info-col {
+    flex-direction: row;
+    align-items: center;
+    gap: 14px;
+}
+
+.inv-items-count {
+    display: none !important;
+}
+
+.inv-amount-badge {
+    font-family: var(--font-sans);
+    font-size: 14.5px;
+    color: var(--text-white);
+}
+
+.inv-status-col[data-status="Paid"] .cs-trigger-text { color: var(--color-success); }
+.inv-status-col[data-status="Pending"] .cs-trigger-text { color: var(--color-warning); }
+.inv-status-col[data-status="Overdue"] .cs-trigger-text { color: var(--color-danger, #ef4444); }
+.inv-status-col[data-status="Draft"] .cs-trigger-text { color: var(--text-dimmed); }
+
+.action-menu-trigger {
+    background: transparent;
+    border-color: transparent;
+}
+
+.history-list-title {
+    font-size: 15px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--text-white);
+}
+
+.export-actions-row button {
+    flex: 0 0 auto;
+    width: auto !important;
+    padding-left: 16px !important;
+    padding-right: 16px !important;
+}
+
+/* Search icon on the right, like the desktop */
+.search-box i.ph {
+    left: auto;
+    right: 14px;
+}
+
+.search-box input {
+    padding-left: 14px !important;
+    padding-right: 38px !important;
+}
+
+/* Clients: one-line cards with a checkbox */
+.client-card {
+    align-items: center;
+    gap: 14px;
+}
+
+.client-card.selected {
+    border-color: rgba(var(--color-brand-rgb), 0.45);
+}
+
+.client-card-info {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.client-card-info h4 {
+    margin: 0;
+    flex-shrink: 0;
+    max-width: 30%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.client-card-info .client-card-meta {
+    flex-wrap: nowrap;
+    min-width: 0;
+    overflow: hidden;
+}
+
+.client-card-meta span {
+    white-space: nowrap;
+}
+
+.client-card-meta span:has(.ph-phone),
+.client-card-notes {
+    display: none !important;
+}
+
+.count-pill {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    color: var(--text-secondary) !important;
+    background: var(--bg-input-hover) !important;
+    border: 1px solid var(--border-subtle) !important;
+    border-radius: 12px !important;
+    padding: 3px 10px !important;
+    align-self: center;
+}
+
+/* Settings: card titles like the desktop (title case, white) */
+.settings-card-bordered h3 {
+    font-size: 14px;
+    text-transform: none;
+    letter-spacing: 0;
+    color: var(--text-white);
+}
+
+.settings-card-bordered .upload-controls {
+    flex: 0 1 220px;
+    max-width: 220px;
+}
+
+/* The toolbar sat in a shrinking flex column and was squeezed to 34 px. */
+.preview-toolbar {
+    flex-shrink: 0;
+}
+
+@media (max-width: 900px) {
+    .export-actions-row button {
+        flex: 1 1 0;
+        width: 100% !important;
+    }
+
+    .client-card-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 4px;
+    }
+
+    .client-card-info h4 {
+        max-width: 100%;
+        white-space: normal;
+    }
+
+    .client-card-info .client-card-meta {
+        flex-wrap: wrap;
+    }
+
+    .client-card-meta span {
+        white-space: normal;
+    }
+
+    .inv-info-col {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 3px;
+    }
+
+    .inv-info-col .inv-client-name {
+        max-width: 100%;
+    }
+}
+
+/* ========================================================
    Phones & portrait tablets (≤ 900px)
    One scrolling column: editor form, then the live preview.
    Save / Download PDF live in a bar pinned to the bottom.
@@ -4588,13 +4789,22 @@ button i.ph {
         display: none;
     }
 
+    .zoom-fit-label {
+        display: none;
+    }
+
+    .toolbar-doc-title i.ph {
+        display: none;
+    }
+
     .toolbar-doc-title {
         overflow: hidden;
         text-overflow: ellipsis;
         white-space: nowrap;
     }
 
-    .invoice-paper {
+    .invoice-paper,
+    .invoice-preview-canvas {
         margin-bottom: 0;
     }
 

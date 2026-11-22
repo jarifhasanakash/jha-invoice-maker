@@ -6,8 +6,8 @@
 1 24 "app.manifest"
 
 1 VERSIONINFO
-FILEVERSION 1,0,0,0
-PRODUCTVERSION 1,0,0,0
+FILEVERSION 1,0,1,0
+PRODUCTVERSION 1,0,1,0
 FILEFLAGSMASK 0x3fL
 FILEFLAGS 0x0L
 FILEOS 0x40004L
@@ -20,12 +20,12 @@ BEGIN
     BEGIN
       VALUE "CompanyName", "Jarif Hasan Akash"
       VALUE "FileDescription", "JHA Invoice Maker"
-      VALUE "FileVersion", "1.0.0.0"
+      VALUE "FileVersion", "1.0.1.0"
       VALUE "InternalName", "JHA Invoice Maker"
       VALUE "LegalCopyright", "Jarif Hasan Akash"
       VALUE "OriginalFilename", "JHA Invoice Maker.exe"
       VALUE "ProductName", "JHA Invoice Maker"
-      VALUE "ProductVersion", "1.0.0.0"
+      VALUE "ProductVersion", "1.0.1.0"
     END
   END
   BLOCK "VarFileInfo"

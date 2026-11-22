@@ -36,7 +36,10 @@ fn main() -> eframe::Result<()> {
         .with_title("JHA Invoice Maker")
         .with_app_id("com.jarifhasan.invoicemaker")
         .with_inner_size([1380.0, 920.0])
-        .with_min_inner_size([800.0, 600.0]);
+        .with_min_inner_size([800.0, 600.0])
+        // Custom 36 px title bar (src/ui/titlebar.rs) instead of the system one.
+        .with_decorations(false)
+        .with_resizable(true);
     // Design-review mode (JHA_REVIEW=1): open without taking keyboard focus.
     if std::env::var_os("JHA_REVIEW").is_some() {
         viewport = viewport.with_active(false);

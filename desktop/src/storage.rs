@@ -1,6 +1,8 @@
 //! Persistent JSON storage.
 //!
-//! Data lives in `%APPDATA%\JHA Invoice Maker\database.json`. If a file named
+//! Data lives in `%APPDATA%\JHA Invoice Maker\database.json` by default. The
+//! user can choose another folder in Settings; the choice is remembered in
+//! `%APPDATA%\JHA Invoice Maker\data-location.txt`. If a file named
 //! `portable.txt` (or an existing `database.json`) sits next to the executable,
 //! the data is kept there instead, so the app can run from a USB stick.
 //!
@@ -15,9 +17,23 @@ use crate::model::{self, Database};
 
 const APP_DIR: &str = "JHA Invoice Maker";
 const DB_FILE: &str = "database.json";
+const LOCATION_FILE: &str = "data-location.txt";
+
+#[derive(Copy, Clone, PartialEq, Eq, Debug)]
+pub enum Mode {
+    /// `%APPDATA%\JHA Invoice Maker`.
+    Default,
+    /// A folder chosen in Settings.
+    Custom,
+    /// Next to the executable (`portable.txt`).
+    Portable,
+}
 
 pub struct Storage {
     pub path: PathBuf,
+    pub mode: Mode,
+    /// Set when the chosen folder was unavailable at start-up.
+    pub warning: Option<String>,
 }
 
 /// What happened when the database was opened.
@@ -33,14 +49,57 @@ impl Storage {
     pub fn locate() -> Self {
         if let Some(dir) = std::env::current_exe().ok().and_then(|p| p.parent().map(Path::to_path_buf)) {
             if dir.join("portable.txt").exists() || dir.join(DB_FILE).exists() {
-                return Self { path: dir.join(DB_FILE) };
+                return Self { path: dir.join(DB_FILE), mode: Mode::Portable, warning: None };
             }
         }
-        let base = dirs::data_dir()
+        let mut warning = None;
+        if let Some(folder) = Self::custom_folder() {
+            if folder.is_dir() {
+                return Self { path: folder.join(DB_FILE), mode: Mode::Custom, warning: None };
+            }
+            warning = Some(format!(
+                "Database folder {} is not available, so the default location is used for now.",
+                folder.display()
+            ));
+        }
+        Self { path: Self::default_folder().join(DB_FILE), mode: Mode::Default, warning }
+    }
+
+    /// `%APPDATA%\JHA Invoice Maker`.
+    pub fn default_folder() -> PathBuf {
+        dirs::data_dir()
             .or_else(dirs::home_dir)
-            .unwrap_or_else(|| PathBuf::from("."));
-        Self {
-            path: base.join(APP_DIR).join(DB_FILE),
+            .unwrap_or_else(|| PathBuf::from("."))
+            .join(APP_DIR)
+    }
+
+    fn custom_folder() -> Option<PathBuf> {
+        let text = fs::read_to_string(Self::default_folder().join(LOCATION_FILE)).ok()?;
+        let path = text.trim();
+        (!path.is_empty()).then(|| PathBuf::from(path))
+    }
+
+    /// Storage for `folder` (default mode when it is the default folder).
+    pub fn at(folder: &Path) -> Self {
+        let mode = if same_dir(folder, &Self::default_folder()) { Mode::Default } else { Mode::Custom };
+        Self { path: folder.join(DB_FILE), mode, warning: None }
+    }
+
+    /// Remembers this storage's folder as the database location.
+    pub fn remember(&self) -> Result<(), String> {
+        let pointer = Self::default_folder().join(LOCATION_FILE);
+        match self.mode {
+            Mode::Portable => Ok(()),
+            Mode::Default => match fs::remove_file(&pointer) {
+                Ok(()) => Ok(()),
+                Err(e) if e.kind() == std::io::ErrorKind::NotFound => Ok(()),
+                Err(e) => Err(format!("Cannot update {}: {e}", pointer.display())),
+            },
+            Mode::Custom => {
+                fs::create_dir_all(Self::default_folder()).map_err(|e| e.to_string())?;
+                fs::write(&pointer, self.folder().display().to_string())
+                    .map_err(|e| format!("Cannot write {}: {e}", pointer.display()))
+            }
         }
     }
 
@@ -86,6 +145,17 @@ impl Storage {
         }
         fs::rename(&tmp, &self.path).map_err(|e| format!("Cannot replace database: {e}"))?;
         Ok(())
+    }
+}
+
+/// True when both paths point at the same folder.
+pub fn same_dir(a: &Path, b: &Path) -> bool {
+    match (fs::canonicalize(a), fs::canonicalize(b)) {
+        (Ok(x), Ok(y)) => x == y,
+        _ => {
+            let norm = |p: &Path| p.to_string_lossy().trim_end_matches(['\\', '/']).to_lowercase();
+            norm(a) == norm(b)
+        }
     }
 }
 

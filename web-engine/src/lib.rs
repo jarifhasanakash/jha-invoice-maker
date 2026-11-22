@@ -47,13 +47,34 @@ struct Request {
     password: Option<String>,
 }
 
+thread_local! {
+    /// Last decoded company logo, keyed by its data URL (decoding is slow).
+    static LOGO: RefCell<Option<(String, Arc<Logo>)>> = const { RefCell::new(None) };
+    /// Glyph outline cache for the raster preview.
+    static RASTER: RefCell<render::Rasterizer> = RefCell::new(render::Rasterizer::default());
+}
+
+fn logo_for(profile: &Profile) -> Arc<Logo> {
+    let url = profile.company_logo.as_deref().unwrap_or("").trim().to_string();
+    if url.is_empty() {
+        return Logo::default_brand();
+    }
+    LOGO.with(|cell| {
+        if let Some((key, logo)) = cell.borrow().as_ref() {
+            if *key == url {
+                return logo.clone();
+            }
+        }
+        let logo = Logo::from_data_url(&url).map(Arc::new).unwrap_or_else(|_| Logo::default_brand());
+        *cell.borrow_mut() = Some((url, logo.clone()));
+        logo
+    })
+}
+
 /// Builds the invoice PDF (protected when a password is given).
 pub fn export_pdf_json(json: &str) -> Result<Vec<u8>, String> {
     let req: Request = serde_json::from_str(json).map_err(|e| format!("Invalid invoice data: {e}"))?;
-    let logo = match req.profile.company_logo.as_deref().filter(|s| !s.trim().is_empty()) {
-        Some(url) => Logo::from_data_url(url).map(Arc::new).unwrap_or_else(|_| Logo::default_brand()),
-        None => Logo::default_brand(),
-    };
+    let logo = logo_for(&req.profile);
     let view = view::view_for(&req.profile, &req.invoice);
     let page = layout::layout(&view, logo);
     let password = req
@@ -104,6 +125,39 @@ pub unsafe extern "C" fn jha_export_pdf(ptr: *const u8, len: usize) -> u32 {
             Err(e) => (1, e.into_bytes()),
         },
         Err(_) => (1, b"Request is not valid UTF-8".to_vec()),
+    };
+    RESULT.with(|r| *r.borrow_mut() = bytes);
+    status
+}
+
+/// Renders the invoice preview (same renderer as the desktop app) at
+/// `scale_milli / 1000` device pixels per CSS pixel.
+/// Returns 0 on success (result = width u32 LE, height u32 LE, RGBA pixels)
+/// or 1 on error (result = UTF-8 message).
+///
+/// # Safety
+/// `ptr..ptr+len` must be a readable buffer.
+#[unsafe(no_mangle)]
+pub unsafe extern "C" fn jha_render_preview(ptr: *const u8, len: usize, scale_milli: u32) -> u32 {
+    let input = unsafe { std::slice::from_raw_parts(ptr, len) };
+    let scale = (scale_milli as f32 / 1000.0).clamp(0.05, 4.0);
+    let rendered = std::str::from_utf8(input)
+        .map_err(|_| "Request is not valid UTF-8".to_string())
+        .and_then(|json| serde_json::from_str::<Request>(json).map_err(|e| format!("Invalid invoice data: {e}")))
+        .map(|req| {
+            let view = view::view_for(&req.profile, &req.invoice);
+            let page = layout::layout(&view, logo_for(&req.profile));
+            RASTER.with(|r| r.borrow_mut().render(&page, scale))
+        });
+    let (status, bytes) = match rendered {
+        Ok((pixels, [w, h])) => {
+            let mut out = Vec::with_capacity(8 + pixels.len());
+            out.extend_from_slice(&(w as u32).to_le_bytes());
+            out.extend_from_slice(&(h as u32).to_le_bytes());
+            out.extend_from_slice(&pixels);
+            (0, out)
+        }
+        Err(e) => (1, e.into_bytes()),
     };
     RESULT.with(|r| *r.borrow_mut() = bytes);
     status

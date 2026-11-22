@@ -12,7 +12,7 @@
     <link rel="stylesheet" type="text/css" href="fonts/google-fonts.css">
     <!-- 100% Offline Local Phosphor SVG Icons (Zero Webfonts) -->
     <link rel="stylesheet" type="text/css" href="icons/icons.css">
-    <link rel="stylesheet" href="styles.css?v=5.6">
+    <link rel="stylesheet" href="styles.css?v=5.9">
     <script src="db.js"></script>
 </head>
 
@@ -182,7 +182,7 @@
                                 <button id="zoom-out-btn" class="zoom-btn" title="Zoom Out"><i class="ph ph-minus"></i></button>
                                 <span id="zoom-level" class="zoom-level-indicator" title="Click to reset zoom (100%)">100%</span>
                                 <button id="zoom-in-btn" class="zoom-btn" title="Zoom In"><i class="ph ph-plus"></i></button>
-                                <button id="zoom-fit-btn" class="zoom-btn" title="Fit to Screen"><i class="ph ph-corners-out"></i> Fit</button>
+                                <button id="zoom-fit-btn" class="zoom-btn" title="Fit to Screen"><i class="ph ph-corners-out"></i><span class="zoom-fit-label"> Fit</span></button>
                             </div>
                         </div>
 
@@ -498,7 +498,7 @@
                                         <h2><i class="ph ph-users"></i> Manage Clients</h2>
                                         <p class="tab-page-subtitle">Save clients for instant one-click selection</p>
                                     </div>
-                                    <span id="modal-clients-count" class="badge">0 Clients</span>
+                                    <span id="modal-clients-count" class="badge count-pill">0 Clients</span>
                                 </div>
                             </div>
 
@@ -563,6 +563,28 @@
                             </div>
 
                             <!-- Clients List -->
+                            <div id="clients-bulk-bar" class="history-bulk-bar hidden">
+                                <div class="bulk-bar-left">
+                                    <label class="inv-checkbox-wrap" title="Select / Deselect all">
+                                        <input type="checkbox" id="clients-bulk-select-all" onchange="toggleSelectAllClients(this)">
+                                        <span class="inv-checkbox-custom"></span>
+                                    </label>
+                                    <span id="clients-bulk-count" class="bulk-selected-text">0 selected</span>
+                                </div>
+                                <div class="bulk-bar-actions">
+                                    <button type="button" class="bulk-action-btn bulk-delete-btn" onclick="bulkDeleteSelectedClients()" title="Delete selected clients">
+                                        <i class="ph ph-trash"></i>
+                                        <span>Delete</span>
+                                    </button>
+                                    <div class="bulk-bar-divider"></div>
+                                    <button type="button" class="bulk-cancel-btn" onclick="clearSelectedClients()" title="Clear selection" aria-label="Clear selection">
+                                        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                            <line x1="2.5" y1="2.5" x2="9.5" y2="9.5"></line>
+                                            <line x1="9.5" y1="2.5" x2="2.5" y2="9.5"></line>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
                             <div id="clients-list-container" class="clients-list-container">
                                 <!-- Client cards will be injected here -->
                             </div>
@@ -822,8 +844,8 @@
     <div id="toast-container" class="toast-container"></div>
 
     <!-- 100% Offline Local PDF Engine (Canvas & Vector jsPDF) -->
-    <script src="pdf-engine.js?v=1.0.0"></script>
-    <script src="script.js?v=5.7"></script>
+    <script src="pdf-engine.js?v=1.1.0"></script>
+    <script src="script.js?v=5.9"></script>
 </body>
 
 </html>

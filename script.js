@@ -22,6 +22,10 @@ document.addEventListener('DOMContentLoaded', async () => {
     ];
     let userModifiedItems = false;
     let currentZoom = 1.0;
+    function formatMoney(value) {
+        const n = Number(value) || 0;
+        return n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
     const DEFAULT_INVOICE_NOTE = 'Please complete your payment within 14 days, your cooperation is greatly appreciated.';
 
     function escapeHtml(str) {
@@ -300,6 +304,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             previewWrapper.style.transform = `scale(${currentZoom})`;
         }
         if (zoomLevelEl) zoomLevelEl.textContent = `${Math.round(currentZoom * 100)}%`;
+        if (typeof scheduleEnginePreview === 'function') scheduleEnginePreview(80);
     };
 
     const autoFitZoom = () => {
@@ -336,10 +341,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             row.className = 'item-row';
             row.innerHTML = `
                 <div class="input-group-full">
-                    <textarea placeholder="Description" oninput="updateItem(${index}, 'description', this.value)">${item.description || ''}</textarea>
+                    <textarea class="item-desc-input" rows="1" placeholder="Description" oninput="updateItem(${index}, 'description', this.value)">${item.description || ''}</textarea>
                 </div>
                 <div class="input-group-full">
-                    <textarea placeholder="Sub-detail (Line breaks supported)" style="font-size: 12px; color: #aaa; min-height: 54px;" oninput="updateItem(${index}, 'sub', this.value)">${item.sub || ''}</textarea>
+                    <textarea class="item-sub-input" rows="3" placeholder="Sub-detail (Line breaks supported)" oninput="updateItem(${index}, 'sub', this.value)">${item.sub || ''}</textarea>
                 </div>
                 <div class="input-row-flex">
                     <div class="input-group" style="flex: 1;">
@@ -439,7 +444,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             const safeSub = item.sub ? escapeHtml(item.sub).replace(/\n/g, '<br>') : '';
             const priceVal = item.price || 0;
             const isNeg = priceVal < 0;
-            const absPrice = Math.abs(priceVal).toFixed(2);
+            const absPrice = formatMoney(Math.abs(priceVal));
             itemDiv.innerHTML = `
                 <div class="item-desc-group">
                     <div class="item-name">${safeDesc}</div>
@@ -454,7 +459,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
 
         const isTotalNeg = total < 0;
-        previews.total.textContent = (isTotalNeg ? '-' : '') + Math.abs(total).toFixed(2);
+        previews.total.textContent = (isTotalNeg ? '-' : '') + formatMoney(Math.abs(total));
 
         // Payment Breakdown
         const showAdvance = inputs.toggleAdvance.checked;
@@ -485,8 +490,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         const advanceVal = showAdvance ? (parseFloat(inputs.advanceAmount.value) || 0) : 0;
         const balanceVal = total - advanceVal;
 
-        previews.advance.textContent = advanceVal.toFixed(2);
-        previews.balance.textContent = balanceVal.toFixed(2);
+        previews.advance.textContent = formatMoney(advanceVal);
+        previews.balance.textContent = formatMoney(balanceVal);
 
         // Note: pulled from New page Invoice Note input
         const noteVal = inputs.invoiceNote ? inputs.invoiceNote.value.trim() : '';
@@ -503,6 +508,90 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // Platform & Bank Visibility
         updatePlatformAndBankVisibility();
+
+        // Pixel-exact preview from the Rust engine (same renderer as the desktop app)
+        scheduleEnginePreview();
+    }
+
+    /* ---------------- Rust engine preview ----------------
+     * The web preview is drawn by the same Rust code as the desktop app's
+     * preview and the PDF, so all three match exactly. Phones can't resize its
+     * text (iOS enforces a minimum font size on zoomed-out HTML). The HTML
+     * preview stays as a fallback until the engine has loaded.
+     */
+    const useEnginePreview = !!window.JhaPdfEngine && !(window.electronAPI && window.electronAPI.exportPdf);
+    const htmlPreviewEl = document.getElementById('invoice-preview');
+    const enginePreviewCanvas = document.createElement('canvas');
+    enginePreviewCanvas.id = 'invoice-preview-canvas';
+    enginePreviewCanvas.className = 'invoice-preview-canvas';
+    enginePreviewCanvas.setAttribute('role', 'img');
+    enginePreviewCanvas.setAttribute('aria-label', 'Invoice preview');
+    if (useEnginePreview && previewWrapper) previewWrapper.appendChild(enginePreviewCanvas);
+
+    let engineTimer = null;
+    let engineBusy = false;
+    let enginePending = false;
+    let engineFailed = false;
+
+    function draftInvoiceForEngine() {
+        const total = items.reduce((sum, item) => sum + (item.price || 0), 0);
+        const showAdvance = inputs.toggleAdvance.checked;
+        const advanceVal = showAdvance ? (parseFloat(inputs.advanceAmount.value) || 0) : 0;
+        const sym = getCurrencySymbol();
+        const placeholder = !currentClient.id;
+        const noteVal = inputs.invoiceNote ? inputs.invoiceNote.value.trim() : '';
+        return {
+            invoiceNumber: inputs.invoiceNumber.value.trim() || '0001',
+            date: toISODate(inputs.invoiceDate.value),
+            currencySymbol: sym,
+            client: {
+                name: currentClient.name || 'Client Name',
+                location: placeholder ? (currentClient.location || 'City/State, Country') : (currentClient.location || ''),
+                email: placeholder ? (currentClient.email || 'client@example.com') : (currentClient.email || ''),
+                currencySymbol: sym
+            },
+            items: items.map(item => ({ description: item.description || '', sub: item.sub || '', price: item.price || 0 })),
+            toggleAdvance: showAdvance,
+            advanceAmount: advanceVal,
+            toggleBalance: inputs.toggleBalance.checked,
+            total: total,
+            balance: total - advanceVal,
+            note: noteVal || DEFAULT_INVOICE_NOTE
+        };
+    }
+
+    function scheduleEnginePreview(delay = 40) {
+        if (!useEnginePreview || engineFailed) return;
+        clearTimeout(engineTimer);
+        engineTimer = setTimeout(runEnginePreview, delay);
+    }
+
+    async function runEnginePreview() {
+        if (engineBusy) { enginePending = true; return; }
+        engineBusy = true;
+        try {
+            const dpr = window.devicePixelRatio || 1;
+            const scale = Math.min(4, Math.max(0.1, currentZoom * dpr));
+            const { width, height, pixels } = await window.JhaPdfEngine.renderPreview({
+                profile: InvoiceDB.getProfile(),
+                invoice: draftInvoiceForEngine()
+            }, scale);
+            if (enginePreviewCanvas.width !== width) enginePreviewCanvas.width = width;
+            if (enginePreviewCanvas.height !== height) enginePreviewCanvas.height = height;
+            enginePreviewCanvas.getContext('2d').putImageData(new ImageData(pixels, width, height), 0, 0);
+            enginePreviewCanvas.style.width = `${width / scale}px`;
+            enginePreviewCanvas.style.height = `${height / scale}px`;
+            enginePreviewCanvas.classList.add('ready');
+            if (htmlPreviewEl) htmlPreviewEl.classList.add('engine-preview-active');
+        } catch (err) {
+            console.warn('Engine preview unavailable, using HTML preview:', err);
+            engineFailed = true;
+            enginePreviewCanvas.classList.remove('ready');
+            if (htmlPreviewEl) htmlPreviewEl.classList.remove('engine-preview-active');
+        } finally {
+            engineBusy = false;
+            if (enginePending) { enginePending = false; runEnginePreview(); }
+        }
     }
 
     function updatePlatformAndBankVisibility() {
@@ -1014,9 +1103,14 @@ document.addEventListener('DOMContentLoaded', async () => {
             return;
         }
 
+        // Drop selections of clients that no longer exist
+        const existingIds = new Set(clients.map(c => c.id));
+        [...selectedClientIds].forEach(id => { if (!existingIds.has(id)) selectedClientIds.delete(id); });
+
         filtered.forEach(client => {
             const card = document.createElement('div');
-            card.className = 'client-card';
+            const isChecked = selectedClientIds.has(client.id);
+            card.className = `client-card${isChecked ? ' selected' : ''}`;
             const currencyBadge = client.currency && client.currency !== 'USD'
                 ? `<span class="client-currency-badge">${client.currency}</span>`
                 : `<span class="client-currency-badge">USD</span>`;
@@ -1026,6 +1120,10 @@ document.addEventListener('DOMContentLoaded', async () => {
             const safePhone = escapeHtml(client.phone || '');
             const safeNotes = escapeHtml(client.notes || '');
             card.innerHTML = `
+                <label class="inv-checkbox-wrap" onclick="event.stopPropagation()" title="Select client">
+                    <input type="checkbox" class="client-row-checkbox" data-id="${client.id}" ${isChecked ? 'checked' : ''} onchange="handleClientCheckChange(this, '${client.id}')">
+                    <span class="inv-checkbox-custom"></span>
+                </label>
                 <div class="client-card-info">
                     <h4>${safeName} ${currencyBadge}</h4>
                     <div class="client-card-meta">
@@ -1060,7 +1158,65 @@ document.addEventListener('DOMContentLoaded', async () => {
             `;
             clientsListContainer.appendChild(card);
         });
+        updateClientsBulkBar();
     }
+
+    const selectedClientIds = new Set();
+
+    function updateClientsBulkBar() {
+        const bar = document.getElementById('clients-bulk-bar');
+        if (!bar) return;
+        const count = selectedClientIds.size;
+        bar.classList.toggle('hidden', count === 0);
+        const countEl = document.getElementById('clients-bulk-count');
+        if (countEl) countEl.textContent = `${count} selected`;
+        const all = document.getElementById('clients-bulk-select-all');
+        const boxes = [...document.querySelectorAll('.client-row-checkbox')];
+        if (all) {
+            const checked = boxes.filter(b => b.checked).length;
+            all.checked = boxes.length > 0 && checked === boxes.length;
+            all.indeterminate = checked > 0 && checked < boxes.length;
+        }
+    }
+
+    window.handleClientCheckChange = (checkbox, id) => {
+        if (checkbox.checked) selectedClientIds.add(id); else selectedClientIds.delete(id);
+        checkbox.closest('.client-card')?.classList.toggle('selected', checkbox.checked);
+        updateClientsBulkBar();
+    };
+
+    window.toggleSelectAllClients = (master) => {
+        document.querySelectorAll('.client-row-checkbox').forEach(cb => {
+            cb.checked = master.checked;
+            const id = cb.getAttribute('data-id');
+            if (master.checked) selectedClientIds.add(id); else selectedClientIds.delete(id);
+            cb.closest('.client-card')?.classList.toggle('selected', master.checked);
+        });
+        updateClientsBulkBar();
+    };
+
+    window.clearSelectedClients = () => {
+        selectedClientIds.clear();
+        document.querySelectorAll('.client-row-checkbox').forEach(cb => {
+            cb.checked = false;
+            cb.closest('.client-card')?.classList.remove('selected');
+        });
+        updateClientsBulkBar();
+    };
+
+    window.bulkDeleteSelectedClients = async () => {
+        const count = selectedClientIds.size;
+        if (count === 0) return;
+        if (!confirm(`Delete ${count} selected ${count === 1 ? 'client' : 'clients'}? This cannot be undone.`)) return;
+        for (const id of [...selectedClientIds]) {
+            await InvoiceDB.deleteClient(id);
+        }
+        selectedClientIds.clear();
+        renderClientsModalList(clientSearchInput.value);
+        populateClientDropdown();
+        updateDBBadge();
+        showToast(`${count} ${count === 1 ? 'client' : 'clients'} deleted`, 'info');
+    };
 
     clientSearchInput.addEventListener('input', (e) => {
         renderClientsModalList(e.target.value);
@@ -2103,9 +2259,9 @@ document.addEventListener('DOMContentLoaded', async () => {
         const distinctCurrencies = new Set(filtered.map(i => i.currencySymbol || '$'));
         const statsSymbol = (distinctCurrencies.size === 1 && filtered.length > 0) ? Array.from(distinctCurrencies)[0] : settingsSymbol;
 
-        statTotalInvoiced.textContent = `${statsSymbol}${totalInvoiced.toFixed(2)}`;
-        statTotalPaid.textContent = `${statsSymbol}${totalPaid.toFixed(2)}`;
-        statTotalPending.textContent = `${statsSymbol}${totalPending.toFixed(2)}`;
+        statTotalInvoiced.textContent = `${statsSymbol}${formatMoney(totalInvoiced)}`;
+        statTotalPaid.textContent = `${statsSymbol}${formatMoney(totalPaid)}`;
+        statTotalPending.textContent = `${statsSymbol}${formatMoney(totalPending)}`;
         statInvoicesCount.textContent = filtered.length;
 
         if (historyTotalCountBadge) {
@@ -2160,10 +2316,10 @@ document.addEventListener('DOMContentLoaded', async () => {
                         </div>
                         <div class="inv-card-right">
                             <div class="inv-amount-badge">
-                                <span class="inv-amount-val">${invSymbol}${total.toFixed(2)}</span>
+                                <span class="inv-amount-val">${invSymbol}${formatMoney(total)}</span>
                             </div>
-                            <div class="inv-status-col">
-                                <select class="table-status-select" onchange="changeInvoiceStatus('${inv.id}', this.value)">
+                            <div class="inv-status-col" data-status="${escapeHtml(status)}">
+                                <select class="table-status-select" onchange="this.closest('.inv-status-col').dataset.status = this.value; changeInvoiceStatus('${inv.id}', this.value)">
                                     <option value="Paid" ${status === 'Paid' ? 'selected' : ''}>Paid</option>
                                     <option value="Pending" ${status === 'Pending' ? 'selected' : ''}>Pending</option>
                                     <option value="Draft" ${status === 'Draft' ? 'selected' : ''}>Draft</option>

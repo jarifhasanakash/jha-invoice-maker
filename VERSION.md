@@ -1,3 +1,17 @@
+# JHA Invoice Maker - Version 1.0.1
+
+## Release Notes (v1.0.1)
+- **Base Version Date**: 23-Nov-2026
+- **Desktop app**:
+  - Custom 36 px title bar (app icon and name, minimize / maximize / close, drag to move, double-click to maximize, resize from any edge).
+  - Settings > JSON Database Engine > Database Location: choose the folder where `database.json` is saved (default stays `%APPDATA%\JHA Invoice Maker`). If the folder already has a database you can open it or replace it; Reset to Default moves back. The choice is remembered in `data-location.txt`.
+  - About shows the version as `1.0.1`.
+- **Web version**:
+  - The invoice preview is drawn by the same Rust renderer as the desktop app (WebAssembly), so preview, PDF and desktop match exactly. Fixes oversized, overlapping preview text on iPhone.
+  - Looks like the desktop app: one-line invoice and client cards, client multi-select with bulk delete, colour-coded statuses, thousands separators, one-line item description, 44 px preview toolbar, title-case setting cards.
+
+---
+
 # JHA Invoice Maker - Version 1.0
 
 ## Release Notes (v1.0)

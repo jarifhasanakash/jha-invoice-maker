@@ -11,7 +11,7 @@
 (function () {
     'use strict';
 
-    const WASM_URL = 'pdf-engine.wasm?v=1.0.0';
+    const WASM_URL = 'pdf-engine.wasm?v=1.1.0';
     let enginePromise = null;
 
     function load() {
@@ -74,9 +74,45 @@
         return out;
     }
 
+    /**
+     * Renders the invoice exactly as the desktop app's preview does.
+     * Returns { width, height, pixels } (RGBA, opaque) at `scale` device px per CSS px.
+     */
+    async function renderPreview(request, scale) {
+        const ex = await load();
+        const input = new TextEncoder().encode(JSON.stringify(request));
+        let status;
+        try {
+            const ptr = ex.jha_alloc(input.length);
+            new Uint8Array(ex.memory.buffer, ptr, input.length).set(input);
+            try {
+                status = ex.jha_render_preview(ptr, input.length, Math.round(scale * 1000));
+            } finally {
+                ex.jha_free(ptr, input.length);
+            }
+        } catch (err) {
+            enginePromise = null;
+            throw new Error(`Preview engine crashed: ${err.message || err}`);
+        }
+        const len = ex.jha_result_len();
+        const base = ex.jha_result_ptr();
+        if (status !== 0) {
+            const msg = new TextDecoder().decode(new Uint8Array(ex.memory.buffer, base, len));
+            ex.jha_result_clear();
+            throw new Error(msg);
+        }
+        const head = new DataView(ex.memory.buffer, base, 8);
+        const width = head.getUint32(0, true);
+        const height = head.getUint32(4, true);
+        const pixels = new Uint8ClampedArray(ex.memory.buffer, base + 8, width * height * 4).slice();
+        ex.jha_result_clear();
+        return { width, height, pixels };
+    }
+
     window.JhaPdfEngine = {
         load,
         exportPdf,
+        renderPreview,
         /** Start downloading the engine in the background (no error if it fails). */
         preload() { load().catch(() => {}); }
     };

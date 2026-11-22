@@ -4,6 +4,7 @@ mod clients;
 mod editor;
 mod history;
 mod settings;
+mod titlebar;
 pub mod theme;
 pub mod widgets;
 
@@ -172,6 +173,8 @@ pub enum Action {
     RestoreDatabase,
     ResetAll,
     OpenDataFolder,
+    ChangeDataLocation,
+    ResetDataLocation,
 }
 
 pub struct App {
@@ -286,7 +289,100 @@ impl App {
                 );
             }
         }
+        if let Some(warning) = app.storage.warning.clone() {
+            app.toast(warning, ToastKind::Warn);
+        }
         app
+    }
+
+    /* ---------------- Database location ---------------- */
+
+    /// Moves the database to `target` (a folder), or opens the database that is
+    /// already there. The previous file is left in place.
+    fn change_data_location(&mut self, ctx: &egui::Context, frame: &eframe::Frame, target: PathBuf) {
+        if crate::storage::same_dir(&target, &self.storage.folder()) {
+            self.toast("The database is already stored in that folder.", ToastKind::Info);
+            return;
+        }
+        let new_storage = Storage::at(&target);
+        let mut opened_existing = false;
+        if new_storage.path.exists() {
+            let res = rfd::MessageDialog::new()
+                .set_level(rfd::MessageLevel::Warning)
+                .set_title("Database found in this folder")
+                .set_description(format!(
+                    "{} already contains a database.json.\n\nOpen it to use the data saved there, or replace it with your current data ({} clients, {} invoices).",
+                    target.display(),
+                    self.db.clients.len(),
+                    self.db.invoices.len()
+                ))
+                .set_buttons(rfd::MessageButtons::YesNoCancelCustom(
+                    "Open It".into(),
+                    "Replace It".into(),
+                    "Cancel".into(),
+                ))
+                .set_parent(frame)
+                .show();
+            match res {
+                rfd::MessageDialogResult::Custom(ref b) if b == "Open It" => {
+                    let loaded = std::fs::read_to_string(&new_storage.path)
+                        .map_err(|e| e.to_string())
+                        .and_then(|t| model::import_backup(&t));
+                    match loaded {
+                        Ok(db) => {
+                            self.db = db;
+                            opened_existing = true;
+                        }
+                        Err(e) => {
+                            self.toast(format!("That database could not be opened: {e}"), ToastKind::Error);
+                            return;
+                        }
+                    }
+                }
+                rfd::MessageDialogResult::Custom(ref b) if b == "Replace It" => {}
+                _ => return,
+            }
+        }
+        if !opened_existing {
+            if let Err(e) = new_storage.save(&self.db) {
+                self.toast(format!("Could not save the database there: {e}"), ToastKind::Error);
+                return;
+            }
+        }
+        if let Err(e) = new_storage.remember() {
+            self.toast(format!("Could not remember the new location: {e}"), ToastKind::Error);
+            return;
+        }
+        let old = self.storage.path.clone();
+        self.storage = new_storage;
+        if opened_existing {
+            self.after_db_replaced(ctx);
+            self.toast(
+                format!("Now using the database in {}.", self.storage.folder().display()),
+                ToastKind::Success,
+            );
+        } else {
+            self.toast(
+                format!(
+                    "Database moved to {}. The previous copy was kept at {}.",
+                    self.storage.folder().display(),
+                    old.display()
+                ),
+                ToastKind::Success,
+            );
+        }
+    }
+
+    fn pick_data_location(&mut self, ctx: &egui::Context, frame: &eframe::Frame) {
+        let Some(folder) = rfd::FileDialog::new()
+            .set_title("Choose where to save the database")
+            .set_directory(self.storage.folder())
+            .set_parent(frame)
+            .pick_folder()
+        else {
+            return;
+        };
+        self.change_data_location(ctx, frame, folder);
     }
 
     /* ---------------- Helpers ---------------- */
@@ -695,6 +791,8 @@ impl App {
                     let _ = std::fs::create_dir_all(&folder);
                     let _ = std::process::Command::new("explorer").arg(&folder).spawn();
                 }
+                Action::ChangeDataLocation => self.pick_data_location(ctx, frame),
+                Action::ResetDataLocation => self.change_data_location(ctx, frame, Storage::default_folder()),
             }
         }
     }
@@ -1002,6 +1100,13 @@ impl eframe::App for App {
             self.actions.push(Action::DownloadCurrent);
         }
 
+        egui::Panel::top("titlebar")
+            .exact_size(titlebar::HEIGHT)
+            .resizable(false)
+            .show_separator_line(false)
+            .frame(Frame::new().fill(BG_APP))
+            .show(ui, |ui| titlebar::show(ui, self.app_icon.as_ref(), "JHA Invoice Maker"));
+
         egui::Panel::top("topbar")
             .exact_size(54.0)
             .resizable(false)
@@ -1036,6 +1141,7 @@ impl eframe::App for App {
             });
 
         show_toasts(&ctx, &self.icons, &mut self.toasts);
+        titlebar::resize_handles(&ctx);
         self.process_actions(&ctx, frame);
     }
 

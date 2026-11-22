@@ -334,15 +334,67 @@ impl App {
                 ui.set_width(ui.available_width());
                 ui.spacing_mut().item_spacing.y = 14.0;
                 ui.horizontal(|ui| {
-                    let path = app.storage.path.display().to_string();
-                    ui.vertical(|ui| {
-                        ui.spacing_mut().item_spacing.y = 2.0;
-                        text(ui, "Stored locally in a JSON file on this computer. Back up or move across devices anytime.", 13.0, Weight::Regular, TEXT_DIM);
-                        text(ui, &path, 11.5, Weight::Regular, TEXT_SUBTLE).on_hover_text(&path);
-                    });
+                    text(ui, "Stored locally in a JSON file on this computer. Back up or move across devices anytime.", 13.0, Weight::Regular, TEXT_DIM);
                     ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                         pill(ui, "Active", SUCCESS, alpha(SUCCESS, 0.1), Some(alpha(SUCCESS, 0.3)), 11.0);
                     });
+                });
+
+                // Database location
+                ui.vertical(|ui| {
+                    ui.spacing_mut().item_spacing.y = 6.0;
+                    field_label(ui, "Database Location", false);
+                    let mode = app.storage.mode;
+                    let folder = app.storage.folder().display().to_string();
+                    ui.horizontal(|ui| {
+                        ui.spacing_mut().item_spacing.x = 10.0;
+                        let change_w = 170.0;
+                        let reset_w = 150.0;
+                        let buttons = match mode {
+                            crate::storage::Mode::Portable => 0.0,
+                            crate::storage::Mode::Default => change_w + 10.0,
+                            crate::storage::Mode::Custom => change_w + reset_w + 20.0,
+                        };
+                        let box_w = (ui.available_width() - buttons).max(120.0);
+                        let (rect, resp) = ui.allocate_exact_size(egui::vec2(box_w, INPUT_HEIGHT), Sense::hover());
+                        ui.painter().rect(rect, 6.0, BG_APP, Stroke::new(1.0, BORDER_SUBTLE), StrokeKind::Inside);
+                        let inner = rect.shrink2(egui::vec2(14.0, 0.0));
+                        let g = galley(ui, &folder, 13.0, Weight::Regular, TEXT_SECONDARY);
+                        let painter = ui.painter().with_clip_rect(inner);
+                        painter.galley(pos2(inner.left(), inner.center().y - g.size().y / 2.0), g, TEXT_SECONDARY);
+                        resp.on_hover_text(app.storage.path.display().to_string());
+                        if mode != crate::storage::Mode::Portable {
+                            if Btn::new(Kind::Secondary, Some("folder"), "Change Location")
+                                .width(change_w)
+                                .height(INPUT_HEIGHT)
+                                .show(ui, &app.icons)
+                                .on_hover_text("Choose the folder where database.json is saved")
+                                .clicked()
+                            {
+                                app.actions.push(Action::ChangeDataLocation);
+                            }
+                        }
+                        if mode == crate::storage::Mode::Custom {
+                            if Btn::new(Kind::Tertiary, None, "Reset to Default")
+                                .width(reset_w)
+                                .height(INPUT_HEIGHT)
+                                .show(ui, &app.icons)
+                                .on_hover_text(format!(
+                                    "Move the database back to {}",
+                                    crate::storage::Storage::default_folder().display()
+                                ))
+                                .clicked()
+                            {
+                                app.actions.push(Action::ResetDataLocation);
+                            }
+                        }
+                    });
+                    let hint = match mode {
+                        crate::storage::Mode::Default => "Default location. Choose another folder (for example a synced or backed-up folder) to keep the database there.",
+                        crate::storage::Mode::Custom => "Custom location. The app opens the database from this folder on every start.",
+                        crate::storage::Mode::Portable => "Portable mode: the database is kept next to the app (portable.txt). Remove portable.txt to choose a location.",
+                    };
+                    wrapped(ui, hint, 12.0, Weight::Regular, TEXT_SUBTLE);
                 });
                 ui.horizontal(|ui| {
                     ui.spacing_mut().item_spacing.x = 6.0;
@@ -401,7 +453,7 @@ impl App {
                 });
                 let info = [
                     ("CREATED BY", "Jarif Hasan Akash".to_string()),
-                    ("CURRENT VERSION", format!("v{} (Native Rust)", env!("CARGO_PKG_VERSION"))),
+                    ("CURRENT VERSION", env!("CARGO_PKG_VERSION").to_string()),
                     ("ARCHITECTURE", "Native Rust app (egui + krilla)".to_string()),
                     ("STORAGE ENGINE", "Local JSON file (zero cloud tracking)".to_string()),
                 ];
