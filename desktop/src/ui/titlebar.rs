@@ -12,10 +12,15 @@ use super::theme::*;
 use crate::fonts::Weight;
 
 pub const HEIGHT: f32 = 36.0;
+/// Windows caption buttons are 46 px wide (Windows 10/11).
 const BUTTON_W: f32 = 46.0;
+/// Windows 11 dark caption colours.
 const CLOSE_HOVER: Color32 = Color32::from_rgb(0xc4, 0x2b, 0x1c);
-const BUTTON_HOVER: Color32 = Color32::from_rgb(0x2d, 0x2d, 0x2d);
-const BUTTON_PRESS: Color32 = Color32::from_rgb(0x38, 0x38, 0x38);
+const CLOSE_PRESS: Color32 = Color32::from_rgb(0xb2, 0x27, 0x1a);
+const BUTTON_HOVER: Color32 = Color32::from_rgba_premultiplied(15, 15, 15, 15); // white @ 6 %
+const BUTTON_PRESS: Color32 = Color32::from_rgba_premultiplied(10, 10, 10, 10); // white @ 4 %
+const GLYPH: Color32 = Color32::from_rgb(0xff, 0xff, 0xff);
+const GLYPH_INACTIVE: Color32 = Color32::from_rgb(0x7a, 0x7a, 0x7a);
 
 #[derive(Copy, Clone)]
 enum Caption {
@@ -52,11 +57,11 @@ pub fn show(ui: &mut Ui, icon: Option<&egui::TextureHandle>, title: &str) {
         let id = Id::unique(("titlebar-btn", kind as u8));
         let resp = ui.interact(r, id, Sense::click());
         let (bg, fg) = match (kind, resp.is_pointer_button_down_on(), resp.hovered()) {
-            (Caption::Close, true, _) => (Some(alpha(CLOSE_HOVER, 0.8)), TEXT_WHITE),
-            (Caption::Close, false, true) => (Some(CLOSE_HOVER), TEXT_WHITE),
-            (_, true, _) => (Some(BUTTON_PRESS), TEXT_WHITE),
-            (_, false, true) => (Some(BUTTON_HOVER), TEXT_WHITE),
-            _ => (None, if focused { TEXT_SECONDARY } else { TEXT_SUBTLE }),
+            (Caption::Close, true, _) => (Some(CLOSE_PRESS), GLYPH),
+            (Caption::Close, false, true) => (Some(CLOSE_HOVER), GLYPH),
+            (_, true, _) => (Some(BUTTON_PRESS), GLYPH),
+            (_, false, true) => (Some(BUTTON_HOVER), GLYPH),
+            _ => (None, if focused { GLYPH } else { GLYPH_INACTIVE }),
         };
         if let Some(bg) = bg {
             painter.rect_filled(r, 0.0, bg);
@@ -105,6 +110,27 @@ pub fn show(ui: &mut Ui, icon: Option<&egui::TextureHandle>, title: &str) {
 }
 
 fn paint_glyph(painter: &egui::Painter, kind: Caption, c: egui::Pos2, color: Color32, ppp: f32) {
+    // Same glyphs and size (10 px) as Windows' own caption buttons:
+    // Segoe Fluent Icons (Windows 11) / Segoe MDL2 Assets (Windows 10).
+    if has_caption_font() {
+        let glyph = match kind {
+            Caption::Minimize => '\u{E921}',
+            Caption::Maximize => '\u{E922}',
+            Caption::Restore => '\u{E923}',
+            Caption::Close => '\u{E8BB}',
+        };
+        let font = egui::FontId::new(10.0, caption_family());
+        let galley = painter.layout_no_wrap(glyph.to_string(), font, color);
+        // Centre the glyph's ink box (not the line box) on the button.
+        let ink = galley.rows.first().map(|r| r.rect()).unwrap_or(galley.rect);
+        let size = ink.size();
+        let pos = pos2(
+            ((c.x - size.x / 2.0) * ppp).round() / ppp,
+            ((c.y - size.y / 2.0) * ppp).round() / ppp,
+        );
+        painter.galley(pos, galley, color);
+        return;
+    }
     // Snap to the pixel grid so 1 px lines stay crisp.
     let snap = |v: f32| (v * ppp).round() / ppp + 0.5 / ppp;
     let c = pos2(snap(c.x), snap(c.y));

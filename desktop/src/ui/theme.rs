@@ -70,6 +70,18 @@ pub fn status_color(status: &str) -> Color32 {
     }
 }
 
+static CAPTION_FONT: std::sync::OnceLock<bool> = std::sync::OnceLock::new();
+
+/// Font family holding the Windows caption-button glyphs (Segoe Fluent Icons / MDL2).
+pub fn caption_family() -> FontFamily {
+    FontFamily::Name("caption-icons".into())
+}
+
+/// True when the Windows icon font was found.
+pub fn has_caption_font() -> bool {
+    CAPTION_FONT.get().copied().unwrap_or(false)
+}
+
 pub fn install(ctx: &egui::Context) {
     // ---- Fonts: Lexend (all weights) + system fallbacks for ৳ etc. ----
     let mut defs = FontDefinitions::default();
@@ -103,6 +115,21 @@ pub fn install(ctx: &egui::Context) {
         list.extend(fallbacks.iter().cloned());
         list.extend(egui_defaults.iter().cloned());
         defs.families.insert(family(weight), list);
+    }
+
+    // Windows caption-button glyphs (minimize / maximize / restore / close) come
+    // from the system icon font, exactly like other Windows apps.
+    let fonts_dir = std::env::var_os("WINDIR")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| "C:\\Windows".into())
+        .join("Fonts");
+    for file in ["SegoeIcons.ttf", "segmdl2.ttf"] {
+        if let Ok(bytes) = std::fs::read(fonts_dir.join(file)) {
+            defs.font_data.insert("caption-icons".into(), Arc::new(FontData::from_owned(bytes)));
+            defs.families.insert(caption_family(), vec!["caption-icons".into()]);
+            let _ = CAPTION_FONT.set(true);
+            break;
+        }
     }
     ctx.set_fonts(defs);
 
