@@ -3,6 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <meta name="description" content="Professional, high-performance invoice generator with offline JSON database, live vector preview, and multi-currency support.">
     <meta name="theme-color" content="#121316">
     <title>JHA Invoice Maker</title>
@@ -11,7 +12,7 @@
     <link rel="stylesheet" type="text/css" href="fonts/google-fonts.css">
     <!-- 100% Offline Local Phosphor SVG Icons (Zero Webfonts) -->
     <link rel="stylesheet" type="text/css" href="icons/icons.css">
-    <link rel="stylesheet" href="styles.css?v=5.5">
+    <link rel="stylesheet" href="styles.css?v=5.6">
     <script src="db.js"></script>
 </head>
 
@@ -436,8 +437,8 @@
                                     </div>
                                 </div>
                                 <div class="export-actions-row">
-                                    <button id="export-csv-btn" class="secondary-btn" title="Export filtered records as CSV"><i class="ph ph-file-csv"></i> Export Filtered CSV</button>
-                                    <button id="export-invoices-json-btn" class="secondary-btn" title="Export filtered invoices as JSON"><i class="ph ph-file-code"></i> Export Filtered JSON</button>
+                                    <button id="export-csv-btn" class="secondary-btn" title="Export filtered records as CSV"><i class="ph ph-file-csv"></i> Export <span class="label-long">Filtered </span>CSV</button>
+                                    <button id="export-invoices-json-btn" class="secondary-btn" title="Export filtered invoices as JSON"><i class="ph ph-file-code"></i> Export <span class="label-long">Filtered </span>JSON</button>
                                 </div>
                             </section>
 
@@ -775,7 +776,6 @@
                                                 <p class="about-app-subtitle">Professional Offline-First Invoicing System</p>
                                             </div>
                                         </div>
-                                        <div class="about-app-pill">Desktop Edition</div>
                                     </div>
 
                                     <div class="about-info-grid">
@@ -785,11 +785,11 @@
                                         </div>
                                         <div class="about-info-item">
                                             <span class="about-info-label">Current Version</span>
-                                            <span class="about-info-val">v0.8 (Stable Desktop)</span>
+                                            <span class="about-info-val">v0.8</span>
                                         </div>
                                         <div class="about-info-item">
                                             <span class="about-info-label">Architecture</span>
-                                            <span class="about-info-val">Portable Native App (Electron + Chromium)</span>
+                                            <span class="about-info-val">Web App (Runs in Your Browser)</span>
                                         </div>
                                         <div class="about-info-item">
                                             <span class="about-info-label">Storage Engine</span>
@@ -823,7 +823,7 @@
 
     <!-- 100% Offline Local PDF Engine (Canvas & Vector jsPDF) -->
     <script src="html2pdf.bundle.min.js"></script>
-    <script src="script.js?v=5.5"></script>
+    <script src="script.js?v=5.6"></script>
 </body>
 
 </html>

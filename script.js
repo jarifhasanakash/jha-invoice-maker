@@ -287,20 +287,35 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     /* ---------------- Zoom & Scale Controls ---------------- */
 
+    // CSS `zoom` scales the layout box too, so a zoomed-out invoice takes up
+    // only the space it occupies on screen (no overflow on phones/tablets).
+    const supportsCssZoom = typeof CSS !== 'undefined' && CSS.supports && CSS.supports('zoom', '0.5');
+
     const setZoom = (scale) => {
-        currentZoom = Math.min(Math.max(scale, 0.4), 1.8);
-        previewWrapper.style.transform = `scale(${currentZoom})`;
+        currentZoom = Math.min(Math.max(scale, 0.2), 1.8);
+        if (supportsCssZoom) {
+            previewWrapper.style.transform = 'none';
+            previewWrapper.style.zoom = String(currentZoom);
+        } else {
+            previewWrapper.style.transform = `scale(${currentZoom})`;
+        }
         if (zoomLevelEl) zoomLevelEl.textContent = `${Math.round(currentZoom * 100)}%`;
     };
 
     const autoFitZoom = () => {
-        const previewArea = document.querySelector('.preview-area');
-        if (!previewArea) return;
-        const availableWidth = previewArea.clientWidth - 80;
         const targetWidth = 1080;
+        let availableWidth = 0;
+        const pane = document.getElementById('view-invoice');
+        if (pane && pane.clientWidth > 0) {
+            const cs = getComputedStyle(pane);
+            availableWidth = pane.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+        } else {
+            const previewArea = document.querySelector('.preview-area');
+            if (!previewArea || previewArea.clientWidth === 0) return;
+            availableWidth = previewArea.clientWidth - 80;
+        }
         if (availableWidth < targetWidth) {
-            const calculatedScale = Math.max(0.4, (availableWidth / targetWidth) * 0.98);
-            setZoom(calculatedScale);
+            setZoom(Math.max(0.2, availableWidth / targetWidth));
         } else {
             setZoom(1.0);
         }
@@ -1586,6 +1601,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         // 2. Temporarily unscale wrapper to measure exact physical dimensions
         if (wrapper) wrapper.style.transform = 'none';
+        if (wrapper) wrapper.style.zoom = '1';
 
         await new Promise(r => setTimeout(r, 80));
 
