@@ -15,6 +15,7 @@ mod pdf;
 mod render;
 mod storage;
 mod ui;
+mod view;
 
 use std::sync::Arc;
 

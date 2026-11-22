@@ -1,0 +1,34 @@
+﻿[package]
+name = "jha_invoice_engine"
+version = "1.0.0"
+edition = "2024"
+description = "JHA Invoice Maker - PDF engine for the web version (WebAssembly)"
+authors = ["Jarif Hasan Akash"]
+publish = false
+
+# Shares its source with the desktop app (../desktop/src): same layout,
+# fonts, PDF writer and AES-256 protection, compiled to WebAssembly.
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+path = "src/lib.rs"
+
+[dependencies]
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif", "bmp", "ico"] }
+krilla = "0.8"
+krilla-svg = "0.8"
+resvg = "0.47"
+rustybuzz = "0.20"
+lopdf = { version = "0.47", default-features = false }
+getrandom = "0.3"
+serde = { version = "1", features = ["derive"] }
+serde_json = { version = "1", features = ["preserve_order"] }
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+base64 = "0.22"
+
+[profile.release]
+opt-level = "s"
+lto = true
+codegen-units = 1
+strip = true
+panic = "abort"

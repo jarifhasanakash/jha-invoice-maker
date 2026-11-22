@@ -1,8 +1,9 @@
 //! Font loading and text shaping shared by the on-screen preview and the PDF
 //! writer, so both produce exactly the same glyph positions.
 //!
-//! Lexend (bundled) is the primary font. Characters it lacks (e.g. the Taka
-//! sign ৳) fall back to Windows system fonts when available.
+//! Lexend (bundled) is the primary font. The Taka sign ৳, which Lexend lacks,
+//! comes from a bundled Noto Sans Bengali subset; other missing characters fall
+//! back to Windows system fonts when available (desktop only).
 
 use std::sync::OnceLock;
 
@@ -13,6 +14,8 @@ pub static LEXEND_REGULAR: &[u8] = include_bytes!("../assets/fonts/Lexend-Regula
 pub static LEXEND_MEDIUM: &[u8] = include_bytes!("../assets/fonts/Lexend-Medium.ttf");
 pub static LEXEND_SEMIBOLD: &[u8] = include_bytes!("../assets/fonts/Lexend-SemiBold.ttf");
 pub static LEXEND_BOLD: &[u8] = include_bytes!("../assets/fonts/Lexend-Bold.ttf");
+/// Noto Sans Bengali (SIL OFL 1.1), subset to the Taka sign.
+pub static NOTO_TAKA: &[u8] = include_bytes!("../assets/fonts/NotoSansBengali-Taka.ttf");
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
 pub enum Weight {
@@ -111,6 +114,22 @@ impl FontBook {
         let primary = [0, 1, 2, 3, 4];
 
         let mut fallbacks = Vec::new();
+        if let Some(face) = make_face(NOTO_TAKA, 0) {
+            fallbacks.push(faces.len());
+            faces.push(face);
+        }
+        #[cfg(not(target_arch = "wasm32"))]
+        Self::load_system_fallbacks(&mut faces, &mut fallbacks);
+
+        Self {
+            faces,
+            primary,
+            fallbacks,
+        }
+    }
+
+    #[cfg(not(target_arch = "wasm32"))]
+    fn load_system_fallbacks(faces: &mut Vec<FontFace>, fallbacks: &mut Vec<usize>) {
         let fonts_dir = std::env::var_os("WINDIR")
             .map(std::path::PathBuf::from)
             .unwrap_or_else(|| "C:\\Windows".into())
@@ -130,12 +149,6 @@ impl FontBook {
                     faces.push(face);
                 }
             }
-        }
-
-        Self {
-            faces,
-            primary,
-            fallbacks,
         }
     }
 

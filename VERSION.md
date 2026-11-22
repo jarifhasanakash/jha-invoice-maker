@@ -14,8 +14,13 @@
   - First-run demo data (profile, platforms, bank, one client, one invoice) when there is nothing to import.
   - UI polish: one-line client and invoice cards, multi-select bulk delete for clients, pixel-exact icons and preview, 42 px inputs throughout, roomier text areas, compact toggles, consistent heading and label spacing, thousands separators on amounts.
   - Small improvements: Ctrl+S / Ctrl+P shortcuts, Ctrl + mouse-wheel zoom, "Open Folder" for the data file, CSV/JSON export uses the current filters, the WhatsApp line is hidden when no phone number is set, and bulk export reports per-file errors.
+- **Web version**:
+  - PDF export now uses the same Rust engine as the desktop app, compiled to WebAssembly (`pdf-engine.wasm`, built from `web-engine/`). Vector text instead of an image, about 25 KB per invoice, and the PDF password from Settings now applies AES-256 edit protection on the web too. Replaces html2pdf.
+  - Mobile and tablet layout: viewport tag restored, single scrolling column with the preview under the form, bottom bar for Save / Download PDF, preview fits any width.
+  - About section no longer refers to the desktop edition.
 
 ---
+
 # JHA Invoice Maker - Version 0.8
 
 ## Release Notes (v0.8)
