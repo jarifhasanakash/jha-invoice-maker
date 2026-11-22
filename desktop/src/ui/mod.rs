@@ -772,6 +772,9 @@ impl App {
                 Action::BulkDeleteClients => self.bulk_delete_clients(frame),
                 Action::SaveClientForm => self.save_client_form(),
                 Action::UploadLogo => self.upload_logo(ctx, frame),
+                Action::RemoveLogo if self.db.profile.company_logo.is_none() => {
+                    self.toast("There is no logo to remove.", ToastKind::Info);
+                }
                 Action::RemoveLogo => {
                     self.db.profile.company_logo = None;
                     self.persist();

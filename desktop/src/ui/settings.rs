@@ -139,7 +139,6 @@ impl App {
         {
             let icons = &self.icons;
             let thumb = self.logo_thumb.as_ref().map(|t| t.id());
-            let has_logo = self.db.profile.company_logo.is_some();
             let form = &mut self.settings;
             two_columns(ui, |a, b| {
                 let h = 190.0;
@@ -187,9 +186,8 @@ impl App {
                             if Btn::new(Kind::Secondary, Some("upload-simple"), "Upload Logo").width(w).show(ui, icons).clicked() {
                                 upload = true;
                             }
-                            if Btn::new(Kind::Danger, Some("trash"), "Remove")
+                            if Btn::new(Kind::DangerSoft, Some("trash"), "Remove")
                                 .width(w)
-                                .enabled(has_logo)
                                 .show(ui, icons)
                                 .clicked()
                             {
@@ -505,7 +503,7 @@ impl App {
                 );
             });
             ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-                if Btn::new(Kind::Danger, Some("warning-circle"), "Delete all data").show(ui, &self.icons).clicked() {
+                if Btn::new(Kind::DangerSoft, Some("warning-circle"), "Delete all data").show(ui, &self.icons).clicked() {
                     self.actions.push(Action::ResetAll);
                 }
             });

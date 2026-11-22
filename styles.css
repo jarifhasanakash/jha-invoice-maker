@@ -4507,8 +4507,11 @@ button i.ph {
 .inv-status-col[data-status="Draft"] .cs-trigger-text { color: var(--text-dimmed); }
 
 .action-menu-trigger {
-    background: transparent;
-    border-color: transparent;
+    width: 36px;
+    height: 36px;
+    border-radius: 7px;
+    background: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
 }
 
 .history-list-title {
@@ -5087,5 +5090,64 @@ button i.ph {
 
     .nav-tab-btn i.ph {
         font-size: 14px;
+    }
+}
+
+/* ========================================================
+   Phones: two-row History cards and button-styled ⋮ menus
+   Row 1: [checkbox] [#0001] .......... [Status ▾] [⋮]
+   Row 2: Client name / date .......... Amount
+   ======================================================== */
+@media (max-width: 900px) {
+    .invoice-row-card {
+        display: grid;
+        grid-template-columns: auto auto minmax(0, 1fr) auto auto;
+        grid-template-areas:
+            "check number . status menu"
+            "info info info amount amount";
+        align-items: center;
+        column-gap: 10px;
+        row-gap: 0;
+        padding: 12px 14px;
+    }
+
+    .invoice-row-card .inv-card-left,
+    .invoice-row-card .inv-card-right {
+        display: contents;
+    }
+
+    .invoice-row-card .inv-checkbox-wrap { grid-area: check; }
+    .invoice-row-card .inv-number-badge { grid-area: number; justify-self: start; }
+    .invoice-row-card .inv-status-col { grid-area: status; width: 120px; }
+    .invoice-row-card .inv-actions-col { grid-area: menu; }
+
+    .invoice-row-card .inv-info-col,
+    .invoice-row-card .inv-amount-badge {
+        margin-top: 12px;
+        padding-top: 12px;
+        align-self: stretch;
+    }
+
+    .invoice-row-card::before {
+        content: "";
+        grid-row: 2;
+        grid-column: 1 / -1;
+        align-self: start;
+        margin-top: 12px;
+        height: 1px;
+        background: var(--border-subtle);
+    }
+
+    .invoice-row-card .inv-info-col {
+        grid-area: info;
+        justify-content: center;
+    }
+
+    .invoice-row-card .inv-amount-badge {
+        grid-area: amount;
+        min-width: 0;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
     }
 }

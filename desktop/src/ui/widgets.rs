@@ -169,6 +169,8 @@ pub enum Kind {
     Secondary,
     Tertiary,
     Danger,
+    /// Neutral button with red text and icon (Settings: Remove, Delete all data).
+    DangerSoft,
 }
 
 pub struct Btn<'a> {
@@ -205,6 +207,7 @@ impl<'a> Btn<'a> {
         self.width = Some(ui.available_width());
         self
     }
+    #[allow(dead_code)] // kept for future disabled buttons
     pub fn enabled(mut self, e: bool) -> Self {
         self.enabled = e;
         self
@@ -247,6 +250,15 @@ impl<'a> Btn<'a> {
                     (BG_SURFACE_HOVER, BORDER_DEFAULT, TEXT_WHITE)
                 } else {
                     (Color32::TRANSPARENT, BORDER_MUTED, TEXT_SECONDARY)
+                }
+            }
+            Kind::DangerSoft => {
+                if pressed {
+                    (N840, BORDER_LIGHT, DANGER_TEXT)
+                } else if hovered {
+                    (N780, BORDER_LIGHT, DANGER_TEXT)
+                } else {
+                    (BG_SURFACE_HOVER, N720, DANGER)
                 }
             }
             Kind::Danger => {
@@ -598,10 +610,16 @@ pub fn checkbox(ui: &mut Ui, icons: &Icons, state: u8) -> Response {
 pub fn dots_button(ui: &mut Ui, open: bool) -> Response {
     let (rect, resp) = ui.allocate_exact_size(Vec2::splat(32.0), Sense::click());
     let painter = ui.painter();
-    if resp.hovered() || open {
-        painter.rect(rect, 7, BG_SURFACE_HOVER, Stroke::new(1.0, BORDER_MUTED), StrokeKind::Inside);
-    }
-    let c = if resp.hovered() || open { TEXT_WHITE } else { TEXT_DIM };
+    // Same look as the status dropdown next to it, so it reads as a button.
+    let (bg, border) = if open {
+        (BG_SURFACE, BRAND)
+    } else if resp.hovered() {
+        (BG_INPUT_HOVER, BORDER_DEFAULT)
+    } else {
+        (BG_SURFACE, BORDER_SUBTLE)
+    };
+    painter.rect(rect, 8, bg, Stroke::new(1.0, border), StrokeKind::Inside);
+    let c = if resp.hovered() || open { TEXT_WHITE } else { TEXT_SECONDARY };
     for dy in [-5.0, 0.0, 5.0] {
         painter.circle_filled(rect.center() + vec2(0.0, dy), 1.6, c);
     }
