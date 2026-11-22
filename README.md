@@ -26,6 +26,21 @@ Open on any PC, Mac, iPhone, or Android device:
 
 ---
 
+## 🖥️ Windows Desktop App (v1.0, native Rust)
+
+A portable Windows app with the same screens and invoice design, rewritten in Rust. No installer and no browser needed.
+
+**[⬇️ Download JHA Invoice Maker.exe](https://github.com/jarifhasanakash/jha-invoice-maker/releases/latest/download/JHA-Invoice-Maker.exe)** (~13 MB, Windows 10/11)
+
+- Single ~13 MB executable (the previous Electron build was ~104 MB).
+- Vector PDF export with selectable text and optional AES-256 edit protection.
+- Data is kept in `%APPDATA%\JHA Invoice Maker\database.json`, or next to the exe in portable mode.
+- JSON backups are compatible with the web version in both directions.
+
+Source code and build instructions: [`desktop/`](desktop/).
+
+---
+
 ## 📲 How to Install as an App (PWA)
 
 ### iPhone / iPad (Safari)
@@ -64,6 +79,7 @@ Open on any PC, Mac, iPhone, or Android device:
 - **Storage:** Browser IndexedDB + localStorage mirror
 - **Cryptography:** Web Crypto API + Pure-JS PBKDF2, HMAC-SHA256, and ChaCha20 cipher engine
 - **PWA:** Web App Manifest + Service Worker offline cache
+- **Desktop app:** Rust, egui, krilla (PDF), lopdf (AES-256)
 
 ---
 

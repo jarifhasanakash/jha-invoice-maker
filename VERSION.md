@@ -1,3 +1,21 @@
+# JHA Invoice Maker - Version 1.0
+
+## Release Notes (v1.0)
+- **Base Version Date**: 22-Nov-2026
+- **Full native Rust rewrite** (replaces Electron + Chromium):
+  - Single portable `JHA Invoice Maker.exe` of ~13 MB (was ~104 MB), built with `desktop/build.ps1`, download from GitHub Releases.
+  - UI rebuilt with egui using the same dark design system, Lexend type, Phosphor icons and layout (New, History, Clients, Settings).
+  - Invoice layout engine ported from the invoice CSS. The on-screen preview and the PDF come from the same layout, so they match exactly.
+  - Vector PDF export via krilla: single page sized to the invoice, zero margins, selectable text, embedded font subsets, SVG logos stay vector.
+  - AES-256 (PDF 2.0, V5/R6) edit protection via lopdf, with the same permissions as v0.8: open, print and copy without a password; editing locked by the owner password.
+  - Storage moved from IndexedDB to `%APPDATA%\JHA Invoice Maker\database.json` (atomic writes + `.bak`), or next to the exe in portable mode (`portable.txt`).
+  - Automatic one-time import of v0.8 data from the Electron app's local storage. JSON backups stay compatible both ways (schema 2.1, unknown fields preserved).
+  - Taka sign (৳) now renders in PDFs via a system-font fallback.
+  - First-run demo data (profile, platforms, bank, one client, one invoice) when there is nothing to import.
+  - UI polish: one-line client and invoice cards, multi-select bulk delete for clients, pixel-exact icons and preview, 42 px inputs throughout, roomier text areas, compact toggles, consistent heading and label spacing, thousands separators on amounts.
+  - Small improvements: Ctrl+S / Ctrl+P shortcuts, Ctrl + mouse-wheel zoom, "Open Folder" for the data file, CSV/JSON export uses the current filters, the WhatsApp line is hidden when no phone number is set, and bulk export reports per-file errors.
+
+---
 # JHA Invoice Maker - Version 0.8
 
 ## Release Notes (v0.8)
