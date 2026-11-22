@@ -4602,6 +4602,49 @@ button i.ph {
     max-width: 220px;
 }
 
+/* Zoom controls like the desktop app: no inner pill, 34 px buttons with an
+   even 5 px inset from the toolbar's top, bottom and right edges. */
+.preview-toolbar {
+    padding-right: 4px; /* + 1 px border = 5 px, same as top and bottom */
+}
+
+.zoom-controls,
+.toolbar-zoom-controls {
+    background: transparent;
+    border: none;
+    padding: 0;
+    gap: 2px;
+}
+
+.zoom-btn {
+    height: 34px;
+    border-radius: 17px;
+    font-size: 12px;
+    font-weight: 500;
+}
+
+#zoom-out-btn,
+#zoom-in-btn {
+    width: 34px;
+    height: 34px;
+}
+
+#zoom-fit-btn {
+    padding: 0 10px;
+    gap: 4px;
+}
+
+.zoom-btn i.ph {
+    font-size: 14px;
+}
+
+#zoom-level,
+.zoom-level-indicator {
+    min-width: 46px;
+    font-size: 12px;
+    color: var(--text-primary);
+}
+
 /* The toolbar sat in a shrinking flex column and was squeezed to 34 px. */
 .preview-toolbar {
     flex-shrink: 0;
@@ -4791,6 +4834,22 @@ button i.ph {
 
     .zoom-fit-label {
         display: none;
+    }
+
+    .toolbar-zoom-controls {
+        gap: 0;
+    }
+
+    #zoom-out-btn,
+    #zoom-in-btn,
+    #zoom-fit-btn {
+        width: 30px;
+        padding: 0;
+    }
+
+    #zoom-level,
+    .zoom-level-indicator {
+        min-width: 40px;
     }
 
     .toolbar-doc-title i.ph {
