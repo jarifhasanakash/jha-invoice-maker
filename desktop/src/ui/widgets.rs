@@ -440,6 +440,9 @@ pub fn two_columns(ui: &mut Ui, f: impl FnOnce(&mut Ui, &mut Ui)) {
 /* Select                                                                    */
 /* ------------------------------------------------------------------------- */
 
+/// Space between a field and the dropdown / calendar it opens.
+const POPUP_GAP: f32 = 8.0;
+
 fn popup_frame() -> Frame {
     Frame::new()
         .fill(BG_SURFACE)
@@ -489,7 +492,16 @@ pub fn select(
     let id = ui.make_persistent_id(id_salt);
     let (rect, resp) = ui.allocate_exact_size(vec2(width, height), Sense::click());
     let resp = resp.on_hover_cursor(CursorIcon::PointingHand);
-    let open = Popup::is_id_open(ui.ctx(), Popup::default_response_id(&resp));
+    let popup_id = id.with("popup");
+    // Design-review mode (JHA_REVIEW_OPEN=select): open the first dropdown once.
+    if std::env::var("JHA_REVIEW_OPEN").as_deref() == Ok("select") {
+        let flag = egui::Id::unique("review-open-select");
+        if !ui.ctx().data(|d| d.get_temp::<bool>(flag).unwrap_or(false)) {
+            ui.ctx().data_mut(|d| d.insert_temp(flag, true));
+            Popup::open_id(ui.ctx(), popup_id);
+        }
+    }
+    let open = Popup::is_id_open(ui.ctx(), popup_id);
     let painter = ui.painter();
     let (bg, border) = if open || invalid {
         (BG_SURFACE, BRAND)
@@ -523,8 +535,11 @@ pub fn select(
 
     let mut picked = None;
     Popup::from_toggle_button_response(&resp)
-        .id(id.with("popup"))
+        .id(popup_id)
         .width(width.max(160.0))
+        .gap(POPUP_GAP)
+        .align(egui::RectAlign::BOTTOM_START)
+        .align_alternatives(&[egui::RectAlign::TOP_START])
         .frame(popup_frame())
         .close_behavior(PopupCloseBehavior::CloseOnClick)
         .show(|ui| {
@@ -605,6 +620,7 @@ pub fn row_menu(
     Popup::menu(trigger)
         .frame(popup_frame())
         .width(190.0)
+        .gap(POPUP_GAP)
         .align(egui::RectAlign::BOTTOM_END)
         .align_alternatives(&[egui::RectAlign::TOP_END])
         .show(|ui| {
@@ -664,6 +680,14 @@ pub fn date_field(
     let (rect, resp) = ui.allocate_exact_size(vec2(width, INPUT_HEIGHT), Sense::click());
     let resp = resp.on_hover_cursor(CursorIcon::PointingHand);
     let popup_id = id.with("cal");
+    // Design-review mode (JHA_REVIEW_OPEN=date): open the first calendar once.
+    if std::env::var("JHA_REVIEW_OPEN").as_deref() == Ok("date") {
+        let flag = egui::Id::unique("review-open-date");
+        if !ui.ctx().data(|d| d.get_temp::<bool>(flag).unwrap_or(false)) {
+            ui.ctx().data_mut(|d| d.insert_temp(flag, true));
+            Popup::open_id(ui.ctx(), popup_id);
+        }
+    }
     let open = Popup::is_id_open(ui.ctx(), popup_id);
 
     let (bg, border) = if open {
@@ -699,6 +723,10 @@ pub fn date_field(
     Popup::from_toggle_button_response(&resp)
         .id(popup_id)
         .width(292.0)
+        // Right-aligned under the field, with a gap (above it when there's no room below).
+        .gap(POPUP_GAP)
+        .align(egui::RectAlign::BOTTOM_END)
+        .align_alternatives(&[egui::RectAlign::TOP_END])
         .frame(popup_frame().inner_margin(Margin::same(12)))
         .close_behavior(PopupCloseBehavior::CloseOnClickOutside)
         .show(|ui| {
